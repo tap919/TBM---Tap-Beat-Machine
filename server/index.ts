@@ -10,6 +10,7 @@ import librariesRouter from './routes/libraries.js';
 import pluginsRouter from './routes/plugins.js';
 import settingsRouter from './routes/settings.js';
 import analyzeRouter from './routes/analyze.js';
+import stemsRouter from './routes/stems.js';
 
 config(); // Load .env
 
@@ -33,7 +34,12 @@ const analyzeLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(express.json());
+const stemsLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5,              // 5 separation jobs per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ── CORS: allow the Vite dev server ──────────────────────────────────────────
 app.use((_req, res, next) => {
@@ -50,6 +56,7 @@ app.use('/api/libraries', apiLimiter, librariesRouter);
 app.use('/api/plugins',   apiLimiter, pluginsRouter);
 app.use('/api/settings',  apiLimiter, settingsRouter);
 app.use('/api/analyze',   analyzeLimiter, analyzeRouter);
+app.use('/api/stems',     stemsLimiter, stemsRouter);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {

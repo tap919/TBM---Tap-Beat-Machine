@@ -18,6 +18,7 @@ import {
   Info,
   ChevronDown,
 } from 'lucide-react';
+import { separateStems, getStemJob, stemDownloadUrl, demucsHealth, type StemJob } from '../lib/api';
 
 type StemStatus = 'idle' | 'uploading' | 'separating' | 'done' | 'error';
 
@@ -39,17 +40,31 @@ const MODELS = [
   { id: 'htdemucs_6s',  label: 'htdemucs_6s',    desc: 'Hybrid Transformer · 6 stems (guitar + piano)' },
 ];
 
-const INITIAL_STEMS: StemTrack[] = [
-  { id: 'drums',  label: 'Drums',  color: '#3b82f6', icon: <Drum size={13} />,   muted: false, volume: 80, ready: false },
-  { id: 'bass',   label: 'Bass',   color: '#a855f7', icon: <Waves size={13} />,  muted: false, volume: 80, ready: false },
-  { id: 'vocals', label: 'Vocals', color: '#eab308', icon: <Mic size={13} />,    muted: false, volume: 80, ready: false },
-  { id: 'other',  label: 'Other',  color: '#22c55e', icon: <Music size={13} />,  muted: false, volume: 80, ready: false },
-];
+const STEM_META: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  drums:  { label: 'Drums',  color: '#3b82f6', icon: <Drum size={13} /> },
+  bass:   { label: 'Bass',   color: '#a855f7', icon: <Waves size={13} /> },
+  vocals: { label: 'Vocals', color: '#eab308', icon: <Mic size={13} /> },
+  other:  { label: 'Other',  color: '#22c55e', icon: <Music size={13} /> },
+  guitar: { label: 'Guitar', color: '#f97316', icon: <Radio size={13} /> },
+  piano:  { label: 'Piano',  color: '#ec4899', icon: <Music size={13} /> },
+};
 
-const EXTRA_STEMS: StemTrack[] = [
-  { id: 'guitar', label: 'Guitar', color: '#f97316', icon: <Radio size={13} />,  muted: false, volume: 80, ready: false },
-  { id: 'piano',  label: 'Piano',  color: '#ec4899', icon: <Music size={13} />,  muted: false, volume: 80, ready: false },
-];
+const DEFAULT_STEMS = ['drums', 'bass', 'vocals', 'other'];
+
+function makeStemTracks(stemIds: string[]): StemTrack[] {
+  return stemIds.map(id => ({
+    id,
+    label: STEM_META[id]?.label ?? id,
+    color: STEM_META[id]?.color ?? '#888',
+    icon:  STEM_META[id]?.icon  ?? <Music size={13} />,
+    muted: false,
+    volume: 80,
+    ready: false,
+  }));
+}
+
+const INITIAL_STEMS = makeStemTracks(DEFAULT_STEMS);
+const ALL_STEMS     = makeStemTracks([...DEFAULT_STEMS, 'guitar', 'piano']);
 
 export function StemSeparator() {
   const [status, setStatus] = useState<StemStatus>('idle');
@@ -57,23 +72,28 @@ export function StemSeparator() {
   const [fileName, setFileName] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [stems, setStems] = useState<StemTrack[]>(INITIAL_STEMS);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [backendInstalled, setBackendInstalled] = useState<boolean | null>(null);
+  const [cachedModels, setCachedModels] = useState<string[]>([]);
+
   const fileRef = useRef<HTMLInputElement>(null);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const modelMenuRef = useRef<HTMLDivElement>(null);
+  const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
 
   const selectedModel = MODELS.find(m => m.id === model) ?? MODELS[0];
 
   // Pre-generate deterministic waveform heights per stem id so they are stable across re-renders
   const waveformData = useMemo<Record<string, number[]>>(() => {
-    const all = [...INITIAL_STEMS, ...EXTRA_STEMS];
     const result: Record<string, number[]> = {};
-    for (const stem of all) {
-      result[stem.id] = Array.from({ length: 80 }, (_, i) => {
-        const phase = i * 0.3 + stem.id.charCodeAt(0);
+    for (const s of ALL_STEMS) {
+      result[s.id] = Array.from({ length: 80 }, (_, i) => {
+        const phase = i * 0.3 + s.id.charCodeAt(0);
         const h = Math.sin(phase) * 0.4 + Math.cos(phase * 0.7) * 0.2 + 0.6;
         return Math.max(0.1, Math.min(1, h));
       });
@@ -89,9 +109,7 @@ export function StemSeparator() {
         setShowModelMenu(false);
       }
     };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowModelMenu(false);
-    };
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowModelMenu(false); };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
     return () => {
@@ -100,62 +118,81 @@ export function StemSeparator() {
     };
   }, [showModelMenu]);
 
-  // Cleanup interval on unmount to prevent state updates on an unmounted component
+  // Cleanup polling on unmount
   useEffect(() => {
-    return () => {
-      if (progressRef.current) clearInterval(progressRef.current);
-    };
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
 
-  const handleFile = (file: File) => {
+  // Check demucs backend health on mount
+  useEffect(() => {
+    demucsHealth()
+      .then(h => { setBackendInstalled(h.installed); setCachedModels(h.cachedModels); })
+      .catch(() => setBackendInstalled(false));
+  }, []);
+
+  /** Poll the backend for job status and update state */
+  const startPolling = (jid: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      try {
+        const job: StemJob = await getStemJob(jid);
+        setProgress(job.progress);
+        setPhase(job.phase);
+
+        if (job.status === 'done') {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          const stemTracks = makeStemTracks(job.stems.length > 0 ? job.stems : DEFAULT_STEMS);
+          setStems(stemTracks.map(s => ({ ...s, ready: true })));
+          setStatus('done');
+          setProgress(100);
+        } else if (job.status === 'error') {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setErrorMsg(job.error ?? 'Demucs separation failed.');
+          setStatus('error');
+        } else if (job.status === 'running') {
+          setStatus('separating');
+        }
+      } catch (err) {
+        clearInterval(pollRef.current!);
+        pollRef.current = null;
+        setErrorMsg((err as Error).message);
+        setStatus('error');
+      }
+    }, 2000);
+  };
+
+  const handleFile = async (file: File) => {
     if (!(file.type.startsWith('audio/') || file.name.match(/\.(mp3|wav|flac|aiff?|ogg|m4a)$/i))) {
       setErrorMsg('Please upload an audio file (mp3, wav, flac, aiff, ogg, m4a).');
       setStatus('error');
       return;
     }
+
     setFileName(file.name);
     setErrorMsg('');
-    startSeparation();
-  };
-
-  const startSeparation = () => {
     setStatus('uploading');
     setProgress(0);
+    setPhase('Uploading…');
 
+    // Reset stems to pending state
     const is6s = model === 'htdemucs_6s';
-    const stemSet = is6s ? [...INITIAL_STEMS, ...EXTRA_STEMS] : INITIAL_STEMS;
-    setStems(stemSet.map(s => ({ ...s, ready: false })));
+    const stemIds = is6s ? [...DEFAULT_STEMS, 'guitar', 'piano'] : DEFAULT_STEMS;
+    setStems(makeStemTracks(stemIds));
+    setPlayingId(null);
 
-    // Simulate upload phase
-    let p = 0;
-    if (progressRef.current) clearInterval(progressRef.current);
-    progressRef.current = setInterval(() => {
-      p += 8;
-      setProgress(Math.min(p, 100));
-      if (p >= 100) {
-        if (progressRef.current) clearInterval(progressRef.current);
-        progressRef.current = null;
-        setStatus('separating');
-        runSeparation(stemSet);
-      }
-    }, 80);
-  };
-
-  const runSeparation = (stemSet: StemTrack[]) => {
-    setProgress(0);
-    let p = 0;
-    if (progressRef.current) clearInterval(progressRef.current);
-    progressRef.current = setInterval(() => {
-      p += 2;
-      setProgress(Math.min(p, 100));
-      if (p >= 100) {
-        if (progressRef.current) clearInterval(progressRef.current);
-        progressRef.current = null;
-        setStems(stemSet.map(s => ({ ...s, ready: true })));
-        setStatus('done');
-        setProgress(100);
-      }
-    }, 60);
+    try {
+      const job = await separateStems(file, model);
+      setJobId(job.jobId);
+      setStatus('separating');
+      setProgress(2);
+      setPhase('Starting Demucs…');
+      startPolling(job.jobId);
+    } catch (err) {
+      setErrorMsg((err as Error).message);
+      setStatus('error');
+    }
   };
 
   const toggleMute = (id: string) => {
@@ -164,21 +201,53 @@ export function StemSeparator() {
 
   const setVolume = (id: string, vol: number) => {
     setStems(prev => prev.map(s => s.id === id ? { ...s, volume: vol } : s));
+    const audio = audioRefs.current[id];
+    if (audio) audio.volume = vol / 100;
   };
 
   const togglePlay = (id: string) => {
-    setPlayingId(prev => prev === id ? null : id);
+    if (!jobId) return;
+    const prevId = playingId;
+
+    // Pause previous
+    if (prevId && prevId !== id && audioRefs.current[prevId]) {
+      audioRefs.current[prevId].pause();
+    }
+
+    if (prevId === id) {
+      audioRefs.current[id]?.pause();
+      setPlayingId(null);
+    } else {
+      const url = stemDownloadUrl(jobId, id);
+      if (!audioRefs.current[id]) {
+        audioRefs.current[id] = new Audio(url);
+        audioRefs.current[id].onended = () => setPlayingId(null);
+      } else {
+        audioRefs.current[id].src = url;
+        audioRefs.current[id].load(); // reset playback position when src changes
+      }
+      const stem = stems.find(s => s.id === id);
+      audioRefs.current[id].volume = (stem?.volume ?? 80) / 100;
+      audioRefs.current[id].muted = stem?.muted ?? false;
+      audioRefs.current[id].play().catch(() => setPlayingId(null));
+      setPlayingId(id);
+    }
   };
 
   const reset = () => {
-    if (progressRef.current) clearInterval(progressRef.current);
-    progressRef.current = null;
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = null;
+    // Stop all audio
+    for (const a of Object.values(audioRefs.current) as HTMLAudioElement[]) { a.pause(); a.src = ''; }
+    audioRefs.current = {};
     setStatus('idle');
     setFileName('');
     setProgress(0);
+    setPhase('');
     setErrorMsg('');
     setStems(INITIAL_STEMS);
     setPlayingId(null);
+    setJobId(null);
   };
 
   return (
@@ -268,7 +337,7 @@ export function StemSeparator() {
                   <Loader2 size={28} className="text-brand animate-spin" />
                   <div className="text-center w-full px-6">
                     <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest mb-2">
-                      {status === 'uploading' ? 'Uploading…' : 'Separating Stems…'}
+                      {phase || (status === 'uploading' ? 'Uploading…' : 'Separating Stems…')}
                     </p>
                     <div
                       role="progressbar"
@@ -279,7 +348,7 @@ export function StemSeparator() {
                       className="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden"
                     >
                       <div
-                        className="h-full bg-brand rounded-full transition-all duration-200"
+                        className="h-full bg-brand rounded-full transition-all duration-500"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -309,7 +378,7 @@ export function StemSeparator() {
           {status === 'error' && (
             <div className="flex items-start gap-2 p-3 bg-red-950/50 border border-red-800/40 rounded-xl">
               <AlertCircle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-[10px] text-red-300">{errorMsg}</p>
+              <p className="text-[10px] text-red-300 break-words">{errorMsg}</p>
             </div>
           )}
 
@@ -318,14 +387,25 @@ export function StemSeparator() {
             <div className="flex items-center gap-1.5">
               <Info size={11} className="text-brand flex-shrink-0" />
               <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">Demucs Backend</span>
+              {backendInstalled === true && (
+                <span className="ml-auto text-[8px] font-bold text-emerald-500 uppercase">● Ready</span>
+              )}
+              {backendInstalled === false && (
+                <span className="ml-auto text-[8px] font-bold text-red-500 uppercase">● Offline</span>
+              )}
             </div>
             <p className="text-[9px] text-neutral-500 leading-relaxed">
-              Runs locally via <span className="text-neutral-300 font-mono">demucs</span> Python package.
-              Start with:
+              Real separation via <span className="text-neutral-300 font-mono">demucs {selectedModel.label}</span> running on the local Express server.
             </p>
-            <code className="text-[8px] font-mono text-brand bg-bg-surface/60 px-2 py-1 rounded-md border border-border-main break-all">
-              pip install demucs && demucs-api --port 7070
-            </code>
+            {cachedModels.length > 0 ? (
+              <p className="text-[9px] text-emerald-600 font-mono">
+                Cached: {cachedModels.slice(0, 4).join(', ')}
+              </p>
+            ) : (
+              <p className="text-[9px] text-neutral-600 leading-relaxed">
+                Model files (~300 MB) download automatically on first use from dl.fbaipublicfiles.com.
+              </p>
+            )}
           </div>
         </div>
 
@@ -381,12 +461,14 @@ export function StemSeparator() {
                       >
                         {stem.muted ? <VolumeX size={11} /> : <Volume2 size={11} />}
                       </button>
-                      <button
+                      <a
+                        href={jobId ? stemDownloadUrl(jobId, stem.id) : '#'}
+                        download={`${stem.label.toLowerCase()}.mp3`}
                         className="p-1.5 rounded-lg bg-bg-surface border border-border-main text-neutral-500 hover:text-brand hover:border-brand/40 transition-all"
                         title={`Download ${stem.label} stem`}
                       >
                         <Download size={11} />
-                      </button>
+                      </a>
                     </>
                   )}
                   {!stem.ready && (status === 'separating' || status === 'uploading') && (
@@ -442,13 +524,26 @@ export function StemSeparator() {
           ))}
 
           {/* Download all */}
-          {status === 'done' && (
-            <button className="w-full py-2.5 bg-brand/15 hover:bg-brand/25 text-brand border border-brand/30 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 flex-shrink-0">
-              <Download size={13} /> Download All Stems (.zip)
-            </button>
+          {status === 'done' && jobId && (
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              <div className="grid grid-cols-2 gap-2">
+                {stems.filter(s => s.ready).map(stem => (
+                  <a
+                    key={stem.id}
+                    href={stemDownloadUrl(jobId, stem.id)}
+                    download={`${stem.label.toLowerCase()}.mp3`}
+                    className="flex items-center justify-center gap-2 py-2 rounded-xl border border-border-main text-neutral-500 hover:text-neutral-200 hover:border-neutral-600 text-[9px] font-bold uppercase tracking-wider transition-all"
+                    style={{ borderColor: stem.color + '40' }}
+                  >
+                    <Download size={11} style={{ color: stem.color }} /> {stem.label}
+                  </a>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
+

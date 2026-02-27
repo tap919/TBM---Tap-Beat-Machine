@@ -95,3 +95,44 @@ export const analyzeSession = (context: {
   rhythm: string;
   notation: string;
 }) => request<AnalysisResult>('/analyze', { method: 'POST', body: JSON.stringify(context) });
+
+// ── Stems (Demucs) ────────────────────────────────────────────────────────────
+
+export type StemJobStatus = 'queued' | 'running' | 'done' | 'error';
+
+export interface StemJob {
+  jobId: string;
+  status: StemJobStatus;
+  progress: number;   // 0-100
+  phase: string;
+  model: string;
+  trackName: string;
+  stems: string[];    // stem names, e.g. ['drums','bass','vocals','other']
+  error?: string;
+}
+
+/** Upload an audio file for stem separation. Returns a job ID. */
+export const separateStems = async (file: File, model: string): Promise<StemJob> => {
+  const form = new FormData();
+  form.append('audio', file);
+  form.append('model', model);
+  const res = await fetch(`${BASE}/stems/separate`, { method: 'POST', body: form });
+  if (!res.ok) {
+    const body = await res.text().catch(() => res.statusText);
+    throw new Error(`Stem separation failed: ${res.status}: ${body}`);
+  }
+  return res.json() as Promise<StemJob>;
+};
+
+/** Poll job status. */
+export const getStemJob = (jobId: string) =>
+  request<StemJob>(`/stems/jobs/${jobId}`);
+
+/** Build a URL to stream/download a separated stem. */
+export const stemDownloadUrl = (jobId: string, stem: string) =>
+  `${BASE}/stems/jobs/${jobId}/download/${stem}`;
+
+/** Check whether demucs is installed and which models are cached. */
+export const demucsHealth = () =>
+  request<{ installed: boolean; python: string; cachedModels: string[]; modelsDir: string }>('/stems/health');
+
