@@ -78,8 +78,11 @@ app.use((err: Error, _req: Request, res: Response, next: NextFunction) => {
     next(err);
     return;
   }
-  const errMeta = err as Error & { type?: string };
-  const isParseError = err instanceof SyntaxError && errMeta.type === 'entity.parse.failed';
+  const hasType = (value: unknown): value is { type: string } =>
+    typeof value === 'object' && value !== null && 'type' in value;
+  const isParseError = err instanceof SyntaxError
+    && hasType(err)
+    && err.type === 'entity.parse.failed';
   if (isParseError) {
     res.status(400).json({ error: 'Invalid JSON payload' });
     return;

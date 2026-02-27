@@ -241,6 +241,8 @@ router.get('/health', async (_req, res) => {
       if (settled) return;
       settled = true;
       clearTimeout(timeoutId);
+      proc.removeAllListeners('error');
+      proc.removeAllListeners('close');
       resolve(value);
     }
     proc.once('error', () => finish(false));
@@ -366,6 +368,7 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
     if (!res.headersSent) {
       res.status(500).json({ error: 'Failed to stream stem file' });
     } else {
+      stream.destroy();
       res.destroy(err);
     }
   });
