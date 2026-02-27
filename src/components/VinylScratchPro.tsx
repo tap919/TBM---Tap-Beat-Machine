@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Knob } from './Knob';
 import {
   Disc3,
@@ -76,9 +76,23 @@ export function VinylScratchPro() {
   const currentStyle = scratchStyles.find(s => s.id === selectedStyle);
   const currentSample = builtInSamples.find(s => s.id === selectedSample);
 
+  const waveformData = useMemo(() =>
+    Array.from({ length: 120 }, (_, i) =>
+      Math.abs(Math.sin(i * 0.15) * 0.3 + (Math.sin(i * 0.73) * 0.5 + 0.5) * 0.4 + 0.15)
+    ), []);
+
+  const autoScratchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (autoScratchTimer.current !== null) clearTimeout(autoScratchTimer.current);
+    };
+  }, []);
+
   const handleAutoScratch = useCallback(() => {
     setIsPlaying(true);
-    setTimeout(() => setIsPlaying(false), 2000);
+    if (autoScratchTimer.current !== null) clearTimeout(autoScratchTimer.current);
+    autoScratchTimer.current = setTimeout(() => setIsPlaying(false), 2000);
   }, []);
 
   return (
@@ -307,19 +321,16 @@ export function VinylScratchPro() {
                 <line x1="40%" y1="0" x2="40%" y2="100%" stroke="var(--brand-primary)" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
                 {/* Fake waveform */}
                 <g fill="var(--brand-primary)" opacity="0.7">
-                  {Array.from({ length: 120 }, (_, i) => {
-                    const val = Math.sin(i * 0.15) * 0.3 + Math.random() * 0.4 + 0.15;
-                    return (
-                      <rect
-                        key={i}
-                        x={`${(i / 120) * 100}%`}
-                        y={`${50 - val * 42}%`}
-                        width="0.7%"
-                        height={`${val * 84}%`}
-                        rx="1"
-                      />
-                    );
-                  })}
+                  {waveformData.map((val, i) => (
+                    <rect
+                      key={i}
+                      x={`${(i / 120) * 100}%`}
+                      y={`${50 - val * 42}%`}
+                      width="0.7%"
+                      height={`${val * 84}%`}
+                      rx="1"
+                    />
+                  ))}
                 </g>
                 {/* Playhead */}
                 {isPlaying && (
