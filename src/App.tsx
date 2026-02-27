@@ -248,7 +248,7 @@ export default function App() {
       </div>
 
       {/* ── Title / Header Bar ────────────────────────────────────────── */}
-      <div className="h-13 bg-bg-surface border-b border-border-main flex items-center px-5 justify-between flex-shrink-0">
+      <div className="h-[52px] bg-bg-surface border-b border-border-main flex items-center px-5 justify-between flex-shrink-0">
         {/* Branding */}
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-3">
