@@ -29,8 +29,8 @@ const scratchStyles: ScratchStyle[] = [
   { id: 'tear', name: 'Tear Scratch', difficulty: 'intermediate', description: 'Aggressive rip forward with fader.' },
   { id: 'flare', name: 'Flare Scratch', difficulty: 'advanced', description: 'Forward with fader cuts mid-motion.' },
   { id: 'crab', name: 'Crab Scratch', difficulty: 'advanced', description: 'Multi-finger rapid stutter technique.' },
-  { id: 'hookStyle', name: 'Hook Scratch', difficulty: 'intermediate', description: 'Musical rhythmic chopped stabs and chirps.' },
-  { id: 'soulScratch', name: 'Soul Scratch', difficulty: 'intermediate', description: 'Laid-back, funky groovy vocal stabs.' },
+  { id: 'hook_style', name: 'Hook Scratch', difficulty: 'intermediate', description: 'Musical rhythmic chopped stabs and chirps.' },
+  { id: 'soul_scratch', name: 'Soul Scratch', difficulty: 'intermediate', description: 'Laid-back, funky groovy vocal stabs.' },
 ];
 
 const builtInSamples = [
