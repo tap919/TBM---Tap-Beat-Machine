@@ -67,7 +67,7 @@ export function StemSeparator() {
   const selectedModel = MODELS.find(m => m.id === model) ?? MODELS[0];
 
   const handleFile = (file: File) => {
-    if (!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|flac|aiff?|ogg|m4a)$/i)) {
+    if (!(file.type.startsWith('audio/') || file.name.match(/\.(mp3|wav|flac|aiff?|ogg|m4a)$/i))) {
       setErrorMsg('Please upload an audio file (mp3, wav, flac, aiff, ogg, m4a).');
       setStatus('error');
       return;
@@ -92,7 +92,8 @@ export function StemSeparator() {
       p += 8;
       setProgress(Math.min(p, 100));
       if (p >= 100) {
-        clearInterval(progressRef.current!);
+        if (progressRef.current) clearInterval(progressRef.current);
+        progressRef.current = null;
         setStatus('separating');
         runSeparation(stemSet);
       }
@@ -107,7 +108,8 @@ export function StemSeparator() {
       p += 2;
       setProgress(Math.min(p, 100));
       if (p >= 100) {
-        clearInterval(progressRef.current!);
+        if (progressRef.current) clearInterval(progressRef.current);
+        progressRef.current = null;
         setStems(stemSet.map(s => ({ ...s, ready: true })));
         setStatus('done');
         setProgress(100);
@@ -129,6 +131,7 @@ export function StemSeparator() {
 
   const reset = () => {
     if (progressRef.current) clearInterval(progressRef.current);
+    progressRef.current = null;
     setStatus('idle');
     setFileName('');
     setProgress(0);

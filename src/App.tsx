@@ -54,7 +54,7 @@ export default function App() {
   const activeState = snapshot.abState;
 
   const pushSnapshot = useCallback((next: ProjectSnapshot) => {
-    setUndoStack(prev => [...prev.slice(-49), snapshot]);
+    setUndoStack(prev => [...prev.slice(-50), snapshot]);
     setRedoStack([]);
     setSnapshot(next);
   }, [snapshot]);
@@ -103,8 +103,8 @@ export default function App() {
   // ── Auto-save: persist on interval ──
   const performAutoSave = useCallback(() => {
     try {
-      const snap = { tab: activeTab, key: projectKey, state: activeState };
-      localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(snap));
+      const autoSavePayload = { tab: activeTab, key: projectKey, state: activeState };
+      localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(autoSavePayload));
       const now = new Date();
       localStorage.setItem(AUTO_SAVE_KEY + '_ts', now.toISOString());
       setLastSavedAt(now);
