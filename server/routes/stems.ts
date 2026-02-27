@@ -30,6 +30,8 @@ interface StemJob {
   phase: string;      // human-readable description of current phase
   model: string;
   trackName: string;
+  trackNameNoExt: string; // sanitized name used for demucs output directory
+  uploadDir: string;      // actual upload directory for TTL cleanup
   outputDir: string;
   stems: string[];    // stem file names available when done
   error?: string;
@@ -44,10 +46,9 @@ setInterval(() => {
   const now = Date.now();
   for (const [id, job] of jobs) {
     if (now - job.createdAt > JOB_TTL_MS) {
-      // Clean up files
+      // Clean up output and upload directories
       try { fs.rmSync(job.outputDir, { recursive: true, force: true }); } catch { /* ignore */ }
-      const uploadPath = path.join(UPLOADS_DIR, id);
-      try { fs.rmSync(uploadPath, { recursive: true, force: true }); } catch { /* ignore */ }
+      try { fs.rmSync(job.uploadDir, { recursive: true, force: true }); } catch { /* ignore */ }
       jobs.delete(id);
     }
   }
@@ -58,7 +59,6 @@ const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const dir = path.join(UPLOADS_DIR, randomUUID());
     fs.mkdirSync(dir, { recursive: true });
-    (_req as Request & { _uploadDir?: string })._uploadDir = dir;
     cb(null, dir);
   },
   filename: (_req, file, cb) => {
@@ -184,14 +184,15 @@ function runDemucs(job: StemJob, audioPath: string): void {
       } else {
         job.error = stderr.slice(-800).trim() || `Demucs exited with code ${code}`;
       }
-      // Clean up failed upload
-      try { fs.unlinkSync(audioPath); } catch { /* ignore */ }
+      // Clean up the upload file and its directory
+      try { fs.rmSync(path.dirname(audioPath), { recursive: true, force: true }); } catch { /* ignore */ }
       return;
     }
 
     // Find the output files.
     // Structure: <outputDir>/<model>/<trackNameNoExt>/<stem>.mp3
     const trackNameNoExt = path.basename(audioPath, path.extname(audioPath));
+    job.trackNameNoExt = trackNameNoExt; // persist for download handler
     const stemDir = path.join(outputDir, job.model, trackNameNoExt);
 
     let foundStems: string[] = [];
@@ -210,8 +211,8 @@ function runDemucs(job: StemJob, audioPath: string): void {
     job.progress = 100;
     job.phase = 'Done';
 
-    // Clean up the upload file
-    try { fs.unlinkSync(audioPath); } catch { /* ignore */ }
+    // Clean up the upload directory
+    try { fs.rmSync(path.dirname(audioPath), { recursive: true, force: true }); } catch { /* ignore */ }
   });
 
   proc.on('error', (err) => {
@@ -276,6 +277,8 @@ router.post('/separate', upload.single('audio'), (req: Request, res: Response) =
     phase: 'Queued',
     model,
     trackName: file.originalname,
+    trackNameNoExt: '',  // set by runDemucs after sanitization
+    uploadDir: path.dirname(file.path), // actual upload directory for cleanup
     outputDir: '',
     stems: [],
     createdAt: Date.now(),
@@ -327,12 +330,8 @@ router.get('/jobs/:jobId/download/:stem', (req: Request, res: Response) => {
   }
 
   // Find the file under outputDir/<model>/<trackNameNoExt>/<stem>.mp3
-  // Prefer the sanitized trackNameNoExt used for Demucs output (if present),
-  // and fall back to deriving it from the original trackName for older jobs.
-  const trackNameNoExt =
-    (job as any).trackNameNoExt ??
-    path.basename(job.trackName, path.extname(job.trackName));
-  const stemFile = path.join(job.outputDir, job.model, trackNameNoExt, `${stemName}.mp3`);
+  // trackNameNoExt is set by runDemucs from the sanitized on-disk filename
+  const stemFile = path.join(job.outputDir, job.model, job.trackNameNoExt, `${stemName}.mp3`);
 
   if (!fs.existsSync(stemFile)) {
     res.status(404).json({ error: 'Stem file not found on disk' });

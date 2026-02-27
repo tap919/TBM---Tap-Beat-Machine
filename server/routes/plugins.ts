@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express';
+import { randomUUID } from 'crypto';
 import db from '../db.js';
 
 const router = Router();
@@ -33,7 +34,7 @@ router.post('/', (req, res) => {
     res.status(400).json({ error: 'type must be VST2 or VST3' });
     return;
   }
-  const id = `plug_${Date.now()}`;
+  const id = randomUUID();
   db.prepare(`
     INSERT INTO plugins (id, name, vendor, type, category, is_enabled, latency)
     VALUES (?, ?, ?, ?, ?, ?, ?)

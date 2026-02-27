@@ -91,7 +91,7 @@ export function SessionMusician() {
         style: activeStyle,
         rhythm: activeRhythm,
         notation: activeNotation,
-      });
+      }, abortRef.current.signal);
       setAnalysis(result);
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {

@@ -41,9 +41,23 @@ const stemsLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// ── CORS: allow the Vite dev server ──────────────────────────────────────────
-app.use((_req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+// ── CORS: restrict to expected origins ───────────────────────────────────────
+// CORS_ORIGIN env var can be a comma-separated list of allowed origins.
+// Defaults to localhost dev URLs when not set.
+// Each origin must use http or https and be a valid URL.
+const RAW_ORIGINS = process.env.CORS_ORIGIN ?? 'http://localhost:3000,http://127.0.0.1:3000';
+const ALLOWED_ORIGINS = new Set(
+  RAW_ORIGINS.split(',')
+    .map(o => o.trim())
+    .filter(o => { try { const u = new URL(o); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; } }),
+);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin ?? '';
+  if (ALLOWED_ORIGINS.has(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Vary', 'Origin');
+  }
   res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();

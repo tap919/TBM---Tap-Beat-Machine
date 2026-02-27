@@ -89,12 +89,10 @@ export const saveSettings = (settings: Record<string, string>) =>
 
 // ── AI Analysis ───────────────────────────────────────────────────────────────
 
-export const analyzeSession = (context: {
-  genre: string;
-  style: string;
-  rhythm: string;
-  notation: string;
-}) => request<AnalysisResult>('/analyze', { method: 'POST', body: JSON.stringify(context) });
+export const analyzeSession = (
+  context: { genre: string; style: string; rhythm: string; notation: string },
+  signal?: AbortSignal,
+) => request<AnalysisResult>('/analyze', { method: 'POST', body: JSON.stringify(context), signal });
 
 // ── Stems (Demucs) ────────────────────────────────────────────────────────────
 

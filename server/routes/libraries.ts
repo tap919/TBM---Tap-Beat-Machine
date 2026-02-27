@@ -4,6 +4,7 @@
  */
 
 import { Router } from 'express';
+import { randomUUID } from 'crypto';
 import db from '../db.js';
 
 const router = Router();
@@ -29,7 +30,7 @@ router.post('/', (req, res) => {
     res.status(400).json({ error: 'name is required' });
     return;
   }
-  const id = `lib_${Date.now()}`;
+  const id = randomUUID();
   db.prepare(`
     INSERT INTO libraries (id, name, vendor, category, size, instruments, is_favorite)
     VALUES (?, ?, ?, ?, ?, ?, ?)

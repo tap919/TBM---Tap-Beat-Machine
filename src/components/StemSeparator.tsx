@@ -118,9 +118,14 @@ export function StemSeparator() {
     };
   }, [showModelMenu]);
 
-  // Cleanup polling on unmount
+  // Cleanup polling and audio on unmount
   useEffect(() => {
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      for (const a of Object.values(audioRefs.current) as HTMLAudioElement[]) {
+        if (a) { a.pause(); a.src = ''; }
+      }
+    };
   }, []);
 
   // Check demucs backend health on mount
