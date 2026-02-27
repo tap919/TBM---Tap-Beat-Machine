@@ -348,6 +348,7 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
   res.setHeader('Accept-Ranges', 'bytes');
   const stream = fs.createReadStream(stemFile);
   stream.on('error', (err) => {
+    stream.destroy();
     if (!res.headersSent) {
       res.status(500).json({ error: 'Failed to stream stem file' });
       return;
