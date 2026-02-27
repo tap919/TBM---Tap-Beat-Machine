@@ -1,5 +1,5 @@
 import React from 'react';
-import { Waves, Music, Sliders, Settings, Save, FolderOpen, Grid3X3, Activity, Library, Cpu, Palette } from 'lucide-react';
+import { Waves, Music, Sliders, Settings, Save, FolderOpen, Grid3X3, Activity, Library, Cpu, Palette, Piano, Users } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -8,16 +8,18 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const menuItems = [
-    { id: 'sampler',  icon: <Waves size={17} />,    label: 'Sampler'  },
-    { id: 'library',  icon: <Library size={17} />,  label: 'Library'  },
-    { id: 'plugins',  icon: <Cpu size={17} />,      label: 'Plugins'  },
-    { id: 'theme',    icon: <Palette size={17} />,  label: 'Theme'    },
-    { id: 'drums',    icon: <Grid3X3 size={17} />,  label: 'Drums'    },
-    { id: 'hats',     icon: <Music size={17} />,    label: 'Hats'     },
-    { id: 'chords',   icon: <Music size={17} />,    label: 'Chords'   },
-    { id: 'mod',      icon: <Activity size={17} />, label: 'Mod'      },
-    { id: 'mixer',    icon: <Sliders size={17} />,  label: 'Mixer'    },
-    { id: 'settings', icon: <Settings size={17} />, label: 'Settings' },
+    { id: 'sampler',    icon: <Waves size={17} />,    label: 'Sampler'  },
+    { id: 'pianoroll',  icon: <Piano size={17} />,    label: 'Piano'    },
+    { id: 'session',    icon: <Users size={17} />,    label: 'Session'  },
+    { id: 'library',    icon: <Library size={17} />,  label: 'Library'  },
+    { id: 'plugins',    icon: <Cpu size={17} />,      label: 'Plugins'  },
+    { id: 'theme',      icon: <Palette size={17} />,  label: 'Theme'    },
+    { id: 'drums',      icon: <Grid3X3 size={17} />,  label: 'Drums'    },
+    { id: 'hats',       icon: <Music size={17} />,    label: 'Hats'     },
+    { id: 'chords',     icon: <Music size={17} />,    label: 'Chords'   },
+    { id: 'mod',        icon: <Activity size={17} />, label: 'Mod'      },
+    { id: 'mixer',      icon: <Sliders size={17} />,  label: 'Mixer'    },
+    { id: 'settings',   icon: <Settings size={17} />, label: 'Settings' },
   ];
 
   return (

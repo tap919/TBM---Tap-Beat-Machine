@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
 import { Mixer808 } from './components/Mixer808';
 import { FXMacros } from './components/FXMacros';
@@ -19,15 +19,22 @@ import { HatSequencer } from './components/HatSequencer';
 import { KontaktBrowser } from './components/KontaktBrowser';
 import { VSTManager } from './components/VSTManager';
 import { ThemeSettings } from './components/ThemeSettings';
+import { PianoRoll } from './components/PianoRoll';
+import { SessionMusician } from './components/SessionMusician';
 import { 
   Download, X, Settings, Save, FileAudio, FileMusic, 
   ChevronDown, AlertCircle, CheckCircle2, Undo2, Redo2, 
   RotateCcw, ZapOff, Activity, Info, BarChart3, Music, Cpu, Palette
 } from 'lucide-react';
 
+const AUTO_SAVE_KEY = 'omnichop_autosave_state';
+const AUTO_SAVE_INTERVAL_MS = 15000;
+const KNOWN_TABS = ['sampler', 'pianoroll', 'session', 'library', 'plugins', 'theme', 'drums', 'hats', 'chords', 'mod', 'mixer', 'settings'] as const;
+
 export default function App() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState('sampler');
   const [projectKey, setProjectKey] = useState('Cm');
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -36,14 +43,44 @@ export default function App() {
   const [activeState, setActiveState] = useState<'A' | 'B'>('A');
   const [isPanic, setIsPanic] = useState(false);
 
-  // Simulate auto-save
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Auto-save: load on mount ──
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsAutoSaving(true);
-      setTimeout(() => setIsAutoSaving(false), 1500);
-    }, 15000);
-    return () => clearInterval(interval);
+    try {
+      const saved = localStorage.getItem(AUTO_SAVE_KEY);
+      if (saved) {
+        const { tab, key, state } = JSON.parse(saved) as Record<string, unknown>;
+        if (typeof tab === 'string' && (KNOWN_TABS as readonly string[]).includes(tab)) setActiveTab(tab);
+        if (typeof key === 'string' && key.length > 0) setProjectKey(key);
+        if (state === 'A' || state === 'B') setActiveState(state);
+        const ts = localStorage.getItem(AUTO_SAVE_KEY + '_ts');
+        if (ts) setLastSavedAt(new Date(ts));
+      }
+    } catch { /* ignore corrupt data */ }
   }, []);
+
+  // ── Auto-save: persist on interval ──
+  const performAutoSave = useCallback(() => {
+    try {
+      const snapshot = { tab: activeTab, key: projectKey, state: activeState };
+      localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(snapshot));
+      const now = new Date();
+      localStorage.setItem(AUTO_SAVE_KEY + '_ts', now.toISOString());
+      setLastSavedAt(now);
+      setIsAutoSaving(true);
+      if (autoSaveTimerRef.current !== null) clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = setTimeout(() => setIsAutoSaving(false), 1500);
+    } catch { /* storage unavailable */ }
+  }, [activeTab, projectKey, activeState]);
+
+  useEffect(() => {
+    const interval = setInterval(performAutoSave, AUTO_SAVE_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+      if (autoSaveTimerRef.current !== null) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [performAutoSave]);
 
   const handlePanic = () => {
     setIsPanic(true);
@@ -159,6 +196,18 @@ export default function App() {
             </div>
           </div>
         );
+      case 'pianoroll':
+        return (
+          <div className="flex-1 p-5 overflow-hidden">
+            <PianoRoll />
+          </div>
+        );
+      case 'session':
+        return (
+          <div className="flex-1 p-5 overflow-y-auto custom-scrollbar">
+            <SessionMusician />
+          </div>
+        );
       case 'settings':
         return (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -238,7 +287,9 @@ export default function App() {
         <div className="flex items-center gap-4">
           <div className={`flex items-center gap-1.5 transition-all duration-500 ${isAutoSaving ? 'opacity-100' : 'opacity-25'}`}>
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isAutoSaving ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-500'}`}></div>
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Auto-Saving…</span>
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
+              {isAutoSaving ? 'Auto-Saving…' : lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Auto-Save'}
+            </span>
           </div>
           <div className="flex items-center gap-3 text-[10px] font-mono">
             <span className="flex items-center gap-1 text-emerald-500"><Activity size={9} /> 12%</span>
