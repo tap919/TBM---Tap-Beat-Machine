@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import express from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { config } from 'dotenv';
 import librariesRouter from './routes/libraries.js';
@@ -71,6 +71,19 @@ app.use('/api/plugins',   apiLimiter, pluginsRouter);
 app.use('/api/settings',  apiLimiter, settingsRouter);
 app.use('/api/analyze',   analyzeLimiter, analyzeRouter);
 app.use('/api/stems',     stemsLimiter, stemsRouter);
+
+// ── Error handling ─────────────────────────────────────────────────────────────
+app.use((err: Error, _req: Request, res: Response, next: NextFunction) => {
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+  if (err instanceof SyntaxError && 'body' in err) {
+    res.status(400).json({ error: 'Invalid JSON payload' });
+    return;
+  }
+  res.status(500).json({ error: 'Server error' });
+});
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {

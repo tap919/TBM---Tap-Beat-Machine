@@ -228,7 +228,7 @@ const router = Router();
  * GET /api/stems/health
  * Returns whether demucs is installed and which models are cached.
  */
-router.get('/health', (_req, res) => {
+router.get('/health', async (_req, res) => {
   const demucsCheck = spawnSync(PYTHON, ['-m', 'demucs', '--help'], { encoding: 'utf8' });
   const installed = demucsCheck.status === 0;
 
@@ -238,7 +238,7 @@ router.get('/health', (_req, res) => {
   try {
     // Demucs weight files are named like "<8hexchars>-<8hexchars>.th"
     // The 8-char hex prefix is the model identifier
-    cachedModels = fs.readdirSync(torchCacheDir)
+    cachedModels = (await fs.promises.readdir(torchCacheDir))
       .filter(f => /^[0-9a-f]{8}-[0-9a-f]{8}\.th$/i.test(f))
       .map(f => f.replace(/-[0-9a-f]{8}\.th$/i, '')); // keep just the model ID prefix
   } catch { /* cache dir may not exist yet */ }
@@ -317,7 +317,7 @@ router.get('/jobs/:jobId', (req: Request, res: Response) => {
  * GET /api/stems/jobs/:jobId/download/:stem
  * Streams the separated stem audio file.
  */
-router.get('/jobs/:jobId/download/:stem', (req: Request, res: Response) => {
+router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) => {
   const job = jobs.get(req.params.jobId);
   if (!job) { res.status(404).json({ error: 'Job not found' }); return; }
   if (job.status !== 'done') { res.status(409).json({ error: 'Job not complete' }); return; }
@@ -333,7 +333,9 @@ router.get('/jobs/:jobId/download/:stem', (req: Request, res: Response) => {
   // trackNameNoExt is set by runDemucs from the sanitized on-disk filename
   const stemFile = path.join(job.outputDir, job.model, job.trackNameNoExt, `${stemName}.mp3`);
 
-  if (!fs.existsSync(stemFile)) {
+  try {
+    await fs.promises.access(stemFile, fs.constants.R_OK);
+  } catch {
     res.status(404).json({ error: 'Stem file not found on disk' });
     return;
   }
@@ -341,7 +343,13 @@ router.get('/jobs/:jobId/download/:stem', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'audio/mpeg');
   res.setHeader('Content-Disposition', `attachment; filename="${stemName}.mp3"`);
   res.setHeader('Accept-Ranges', 'bytes');
-  fs.createReadStream(stemFile).pipe(res);
+  const stream = fs.createReadStream(stemFile);
+  stream.on('error', () => {
+    if (!res.headersSent) {
+      res.status(404).json({ error: 'Stem file not found on disk' });
+    }
+  });
+  stream.pipe(res);
 });
 
 // ── Multer error handler ──────────────────────────────────────────────────────
