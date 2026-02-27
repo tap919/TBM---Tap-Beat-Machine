@@ -132,5 +132,4 @@ export const stemDownloadUrl = (jobId: string, stem: string) =>
 
 /** Check whether demucs is installed and which models are cached. */
 export const demucsHealth = () =>
-  request<{ installed: boolean; python: string; cachedModels: string[]; modelsDir: string }>('/stems/health');
-
+  request<{ installed: boolean; python: string; cachedModels: string[]; modelsDir: string; healthError?: string }>('/stems/health');

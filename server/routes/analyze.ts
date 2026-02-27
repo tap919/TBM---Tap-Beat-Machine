@@ -32,7 +32,8 @@ router.post('/', async (req, res) => {
     return;
   }
 
-  const { genre = 'Hip-Hop', style = 'comping', rhythm = 'swing', notation = 'Diatonic' } = req.body as Record<string, string>;
+  const body = req.body && typeof req.body === 'object' ? req.body as Record<string, string> : {};
+  const { genre = 'Hip-Hop', style = 'comping', rhythm = 'swing', notation = 'Diatonic' } = body;
 
   // Validate field lengths to prevent prompt injection / oversized requests
   const MAX_LEN = 100;
