@@ -12,10 +12,10 @@ export function Mixer808() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-sm font-bold text-neutral-500 uppercase tracking-widest">808 Engine</h2>
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${sidechain ? 'bg-green-500 animate-pulse' : 'bg-neutral-700'}`}></div>
-          <span className="text-[10px] font-mono text-neutral-500 uppercase">SC Link</span>
+        <h2 className="text-[11px] font-black text-neutral-400 uppercase tracking-widest">808 Engine</h2>
+        <div className="flex items-center gap-2 px-2 py-0.5 rounded-md bg-bg-main/50 border border-border-main">
+          <div className={`w-1.5 h-1.5 rounded-full ${sidechain ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)] animate-pulse' : 'bg-neutral-700'}`}></div>
+          <span className="text-[9px] font-bold font-mono text-neutral-500 uppercase">SC Link</span>
         </div>
       </div>
       

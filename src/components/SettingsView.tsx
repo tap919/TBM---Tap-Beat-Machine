@@ -8,7 +8,7 @@ export function SettingsView() {
 
   return (
     <div className="h-full flex flex-col gap-8 p-6">
-      <h2 className="text-xl font-bold text-neutral-200 uppercase tracking-[0.2em]">Audio & System Settings</h2>
+      <h2 className="text-[13px] font-black text-neutral-200 uppercase tracking-[0.2em]">Audio & System Settings</h2>
       
       <div className="grid grid-cols-2 gap-12">
         {/* Audio Engine */}

@@ -14,11 +14,11 @@ export function FXMacros() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-sm font-bold text-neutral-500 uppercase tracking-widest">FX Rack</h2>
+        <h2 className="text-[11px] font-black text-neutral-400 uppercase tracking-widest">FX Rack</h2>
         <div className="flex items-center gap-3">
           <span className="text-[9px] font-mono text-neutral-600 uppercase">Mix: {mix}%</span>
-          <button className="flex items-center gap-1 text-[10px] font-bold text-neutral-500 hover:text-white transition-colors uppercase tracking-tighter">
-            <RefreshCw className="w-3 h-3" />
+          <button className="flex items-center gap-1 text-[9px] font-bold text-neutral-500 hover:text-neutral-200 transition-colors uppercase tracking-tighter px-2 py-0.5 rounded-md bg-bg-main/50 border border-border-main">
+            <RefreshCw className="w-2.5 h-2.5" />
             Resample
           </button>
         </div>

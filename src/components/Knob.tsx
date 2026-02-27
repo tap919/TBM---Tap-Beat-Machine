@@ -48,40 +48,59 @@ export function Knob({ label, value, onChange, min = 0, max = 100, color = '#4C8
   const rotation = -135 + percentage * 270;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div 
-        className="relative w-16 h-16 rounded-full bg-neutral-800 border-2 border-neutral-700 shadow-inner cursor-ns-resize flex items-center justify-center"
+    <div className="flex flex-col items-center gap-2 select-none">
+      <div
+        className={`relative w-14 h-14 rounded-full cursor-ns-resize flex items-center justify-center transition-shadow duration-150 ${
+          isDragging ? 'shadow-[0_0_16px_var(--knob-glow)]' : ''
+        }`}
+        style={{ '--knob-glow': color + '66' } as React.CSSProperties & { '--knob-glow': string }}
         onMouseDown={handleMouseDown}
       >
+        {/* Outer ring track */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100">
-          <circle 
-            cx="50" cy="50" r="40" 
-            fill="none" 
-            stroke="#1a1a1a" 
-            strokeWidth="6"
-            strokeDasharray="188.5 251.3"
+          {/* Track groove */}
+          <circle
+            cx="50" cy="50" r="42"
+            fill="none"
+            stroke="rgba(0,0,0,0.5)"
+            strokeWidth="7"
+            strokeDasharray="197.9 263.9"
             strokeLinecap="round"
             transform="rotate(135 50 50)"
           />
-          <circle 
-            cx="50" cy="50" r="40" 
-            fill="none" 
-            stroke={color} 
-            strokeWidth="6"
-            strokeDasharray={`${percentage * 188.5} 251.3`}
+          {/* Track background */}
+          <circle
+            cx="50" cy="50" r="42"
+            fill="none"
+            stroke="rgba(255,255,255,0.05)"
+            strokeWidth="5"
+            strokeDasharray="197.9 263.9"
             strokeLinecap="round"
             transform="rotate(135 50 50)"
+          />
+          {/* Active arc */}
+          <circle
+            cx="50" cy="50" r="42"
+            fill="none"
+            stroke={color}
+            strokeWidth="5"
+            strokeDasharray={`${percentage * 197.9} 263.9`}
+            strokeLinecap="round"
+            transform="rotate(135 50 50)"
+            style={{ filter: `drop-shadow(0 0 3px ${color}88)` }}
           />
         </svg>
-        
-        <div 
-          className="w-10 h-10 rounded-full bg-neutral-700 shadow-md relative"
+
+        {/* Inner cap */}
+        <div
+          className="w-9 h-9 rounded-full bg-gradient-to-br from-neutral-600 to-neutral-800 shadow-[0_2px_6px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] relative"
           style={{ transform: `rotate(${rotation}deg)` }}
         >
-          <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-3 bg-white rounded-full"></div>
+          {/* Indicator dot */}
+          <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-2.5 rounded-full" style={{ backgroundColor: color }}></div>
         </div>
       </div>
-      <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider">{label}</div>
+      <span className="text-[9px] font-bold font-mono text-neutral-500 uppercase tracking-wider">{label}</span>
     </div>
   );
 }
