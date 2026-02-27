@@ -327,7 +327,7 @@ export function VinylScratchPro({ onSendToSampleEditor }: { onSendToSampleEditor
       chirp: [
         { id: 'c1', type: 'forward',     startBeat: 0.0,  durationBeats: 0.5,  speedMultiplier: 1.8, faderPosition: 0.0 },
         { id: 'c2', type: 'fader_open',  startBeat: 0.15, durationBeats: 0.2,  speedMultiplier: 1.8, faderPosition: 1.0 },
-        { id: 'c3', type: 'fader_close', startBeat: 0.35, durationBeats: 0.0,  speedMultiplier: 1.8, faderPosition: 0.0 },
+        { id: 'c3', type: 'fader_close', startBeat: 0.35, durationBeats: 0.25, speedMultiplier: 1.8, faderPosition: 0.0 },
         { id: 'c4', type: 'backward',    startBeat: 0.5,  durationBeats: 0.5,  speedMultiplier: 1.0, faderPosition: 0.0 },
       ],
       transformer: [
