@@ -16,6 +16,16 @@ import {
   FileCode
 } from 'lucide-react';
 
+// Default drum pattern: track index → set of active step indices (0-15)
+const DEFAULT_PATTERN: Record<number, number[]> = {
+  0: [0, 4, 8, 12],  // Kick 808: 4-on-the-floor
+  1: [2, 6, 10, 14], // Snare 1: beats 2 & 4 (× 2)
+  2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], // Hat Closed: every step
+};
+
+const TRACK_COLORS: string[] = ['#FF4C4C', '#4C83FF', '#FFD700', '#00FF00'];
+const STEP_W = 6.25; // 100% / 16 steps
+
 export function DrumMachine() {
   const [activeTrack, setActiveTrack] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -25,8 +35,16 @@ export function DrumMachine() {
   const [preCount, setPreCount] = useState(true);
   const [swing, setSwing] = useState(15);
   const [bpm, setBpm] = useState(92);
-
   const [showAutomation, setShowAutomation] = useState(false);
+  const [pattern, setPattern] = useState<Record<number, number[]>>(DEFAULT_PATTERN);
+
+  const toggleStep = (trackId: number, step: number) => {
+    setPattern(prev => {
+      const current = prev[trackId] ?? [];
+      const next = current.includes(step) ? current.filter(s => s !== step) : [...current, step];
+      return { ...prev, [trackId]: next };
+    });
+  };
 
   const pads = Array.from({ length: 16 }, (_, i) => ({
     id: i,
@@ -171,27 +189,36 @@ export function DrumMachine() {
                     <div key={i} className={`border-r ${i % 4 === 3 ? 'border-neutral-700' : 'border-neutral-900'}`}></div>
                   ))}
                 </div>
-                {tracks.map((track) => (
-                  <div key={track.id} className="h-8 border-b border-neutral-900 flex relative">
-                    {/* Fake Notes */}
-                    {track.id === 0 && (
-                      <>
-                        <div className="absolute left-0 w-[6.25%] h-full bg-red-500/40 border-l border-red-500"></div>
-                        <div className="absolute left-[25%] w-[6.25%] h-full bg-red-500/40 border-l border-red-500"></div>
-                        <div className="absolute left-[50%] w-[6.25%] h-full bg-red-500/40 border-l border-red-500"></div>
-                        <div className="absolute left-[75%] w-[6.25%] h-full bg-red-500/40 border-l border-red-500"></div>
-                      </>
-                    )}
-                    {track.id === 1 && (
-                      <>
-                        <div className="absolute left-[12.5%] w-[6.25%] h-full bg-blue-500/40 border-l border-blue-500"></div>
-                        <div className="absolute left-[37.5%] w-[6.25%] h-full bg-blue-500/40 border-l border-blue-500"></div>
-                        <div className="absolute left-[62.5%] w-[6.25%] h-full bg-blue-500/40 border-l border-blue-500"></div>
-                        <div className="absolute left-[87.5%] w-[6.25%] h-full bg-blue-500/40 border-l border-blue-500"></div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                {tracks.map((track) => {
+                    const trackColor = TRACK_COLORS[track.id % TRACK_COLORS.length];
+                    const activeSteps = pattern[track.id] ?? [];
+                    return (
+                      <div key={track.id} className="h-8 border-b border-neutral-900 flex relative">
+                        {activeSteps.map(step => (
+                          <div
+                            key={step}
+                            className="absolute h-full border-l cursor-pointer"
+                            style={{
+                              left: `${step * STEP_W}%`,
+                              width: `${STEP_W}%`,
+                              backgroundColor: trackColor + '40',
+                              borderColor: trackColor,
+                            }}
+                            onClick={() => toggleStep(track.id, step)}
+                          />
+                        ))}
+                        {/* Click on empty cells to add notes */}
+                        {Array.from({ length: 16 }, (_, step) => (
+                          <div
+                            key={`empty-${step}`}
+                            className="absolute h-full cursor-pointer hover:bg-white/5 transition-colors"
+                            style={{ left: `${step * STEP_W}%`, width: `${STEP_W}%` }}
+                            onClick={() => { if (!activeSteps.includes(step)) toggleStep(track.id, step); }}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
 

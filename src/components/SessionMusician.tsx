@@ -4,6 +4,7 @@ import {
   Music, Mic2, Piano, Guitar, AudioLines, Drum,
   Sparkles, RefreshCw, Volume2, VolumeX, Sliders
 } from 'lucide-react';
+import { analyzeSession, type AnalysisResult } from '../lib/api';
 
 // ─── Option lists ─────────────────────────────────────────────────────────────
 const GENRES = ['Hip-Hop', 'Jazz', 'R&B / Soul', 'Electronic', 'Pop', 'Rock', 'Classical', 'Bossa Nova', 'Funk', 'Blues'];
@@ -56,31 +57,6 @@ function makeInstruments(): Instrument[] {
 }
 
 // ─── Detected scale / chord info (simulated analysis) ────────────────────────
-interface AnalysisResult {
-  key: string;
-  scale: string;
-  chords: string[];
-  tempo: number;
-  confidence: number;
-}
-
-function fakeAnalyze(): AnalysisResult {
-  const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-  const scales = ['Major', 'Minor', 'Dorian', 'Mixolydian', 'Pentatonic Minor'];
-  const chordSets = [
-    ['Cmaj7', 'Am7', 'Fmaj7', 'G7'],
-    ['Dm7', 'G7', 'Cmaj7', 'Am7'],
-    ['Am9', 'Dm9', 'E7#9', 'Am9'],
-  ];
-  return {
-    key: keys[Math.floor(Math.random() * keys.length)],
-    scale: scales[Math.floor(Math.random() * scales.length)],
-    chords: chordSets[Math.floor(Math.random() * chordSets.length)],
-    tempo: 80 + Math.floor(Math.random() * 60),
-    confidence: 75 + Math.floor(Math.random() * 25),
-  };
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function SessionMusician() {
   const [instruments, setInstruments] = useState<Instrument[]>(makeInstruments);
@@ -92,26 +68,39 @@ export function SessionMusician() {
   const [isLearning, setIsLearning] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [groove, setGroove] = useState(50);
   const [intensity, setIntensity] = useState(70);
   const [complexity, setComplexity] = useState(50);
 
-  const learnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    return () => {
-      if (learnTimerRef.current !== null) clearTimeout(learnTimerRef.current);
-    };
+    return () => { abortRef.current?.abort(); };
   }, []);
 
-  const handleLearn = useCallback(() => {
+  const handleLearn = useCallback(async () => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
     setIsLearning(true);
     setAnalysis(null);
-    learnTimerRef.current = setTimeout(() => {
+    setAnalyzeError(null);
+    try {
+      const result = await analyzeSession({
+        genre: activeGenre,
+        style: activeStyle,
+        rhythm: activeRhythm,
+        notation: activeNotation,
+      });
+      setAnalysis(result);
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setAnalyzeError((err as Error).message ?? 'Analysis failed');
+      }
+    } finally {
       setIsLearning(false);
-      setAnalysis(fakeAnalyze());
-    }, 1600);
-  }, []);
+    }
+  }, [activeGenre, activeStyle, activeRhythm, activeNotation]);
 
   const toggleInstrument = (id: string) => {
     setInstruments(prev =>
@@ -181,6 +170,13 @@ export function SessionMusician() {
             <span><span className="text-neutral-600">Chords: </span><span className="text-yellow-400">{analysis.chords.join(' → ')}</span></span>
             <span><span className="text-neutral-600">Confidence: </span><span className={analysis.confidence > 90 ? 'text-emerald-400' : 'text-yellow-400'}>{analysis.confidence}%</span></span>
           </div>
+        </div>
+      )}
+
+      {analyzeError && !analysis && (
+        <div className="flex-shrink-0 bg-red-950/30 border border-red-900/40 rounded-xl p-3 flex items-center gap-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-red-400">Analysis error:</span>
+          <span className="text-[10px] font-mono text-red-500">{analyzeError}</span>
         </div>
       )}
 

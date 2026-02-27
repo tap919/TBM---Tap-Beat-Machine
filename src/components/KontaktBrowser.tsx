@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Library, 
   Search, 
@@ -12,23 +12,21 @@ import {
   Database,
   RefreshCw,
   Plus,
-  FileCode
+  FileCode,
+  Loader2
 } from 'lucide-react';
-
-interface SampleLibrary {
-  id: string;
-  name: string;
-  vendor: string;
-  category: string;
-  size: string;
-  instruments: number;
-  isFavorite: boolean;
-}
+import {
+  fetchLibraries,
+  toggleLibraryFavorite,
+  type SampleLibrary,
+} from '../lib/api';
 
 export function KontaktBrowser() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [isScanning, setIsScanning] = useState(false);
+  const [libraries, setLibraries] = useState<SampleLibrary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const categories = [
     "All",
@@ -49,22 +47,36 @@ export function KontaktBrowser() {
     "Bowed"
   ];
 
-  const mockLibraries: SampleLibrary[] = [
-    { id: '1', name: 'The Giant', vendor: 'TBM Instruments', category: 'Pianos & Keys', size: '3.9 GB', instruments: 2, isFavorite: true },
-    { id: '2', name: 'Session Strings Pro 2', vendor: 'TBM Instruments', category: 'Strings', size: '32.1 GB', instruments: 24, isFavorite: false },
-    { id: '3', name: 'Action Strikes', vendor: 'TBM Instruments', category: 'Drums & Percussion', size: '3.2 GB', instruments: 12, isFavorite: true },
-    { id: '4', name: 'Damage 2', vendor: 'TBM Instruments', category: 'Drums & Percussion', size: '60.5 GB', instruments: 48, isFavorite: true },
-    { id: '5', name: 'Exhale', vendor: 'TBM Instruments', category: 'Choir & Vocals', size: '9.2 GB', instruments: 500, isFavorite: false },
-    { id: '6', name: 'Straylight', vendor: 'TBM Instruments', category: 'Sound Design', size: '2.4 GB', instruments: 380, isFavorite: false },
-    { id: '7', name: 'Pharlight', vendor: 'TBM Instruments', category: 'Sound Design', size: '1.2 GB', instruments: 350, isFavorite: false },
-  ];
+  const loadLibraries = useCallback(async () => {
+    try {
+      const data = await fetchLibraries();
+      setLibraries(data);
+    } catch {
+      // keep empty on error
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const handleScan = () => {
+  useEffect(() => { loadLibraries(); }, [loadLibraries]);
+
+  const handleScan = async () => {
     setIsScanning(true);
-    setTimeout(() => setIsScanning(false), 2000);
+    await loadLibraries();
+    setTimeout(() => setIsScanning(false), 600);
   };
 
-  const filteredLibraries = mockLibraries.filter(lib => {
+  const handleToggleFavorite = async (lib: SampleLibrary) => {
+    const next = !lib.isFavorite;
+    setLibraries(prev => prev.map(l => l.id === lib.id ? { ...l, isFavorite: next } : l));
+    try {
+      await toggleLibraryFavorite(lib.id, next);
+    } catch {
+      setLibraries(prev => prev.map(l => l.id === lib.id ? { ...l, isFavorite: lib.isFavorite } : l));
+    }
+  };
+
+  const filteredLibraries = libraries.filter(lib => {
     const matchesSearch = lib.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          lib.vendor.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === 'All' || lib.category === activeCategory;
@@ -153,12 +165,11 @@ export function KontaktBrowser() {
               <Clock size={12} className="text-neutral-600" />
             </div>
             <div className="flex flex-col gap-2">
-              <div className="text-[10px] text-neutral-400 bg-neutral-950 p-2 rounded border border-neutral-800 hover:text-red-500 cursor-pointer transition-colors">
-                The Giant
-              </div>
-              <div className="text-[10px] text-neutral-400 bg-neutral-950 p-2 rounded border border-neutral-800 hover:text-red-500 cursor-pointer transition-colors">
-                Damage 2
-              </div>
+              {libraries.filter(l => l.isFavorite).slice(0, 2).map(lib => (
+                <div key={lib.id} className="text-[10px] text-neutral-400 bg-neutral-950 p-2 rounded border border-neutral-800 hover:text-red-500 cursor-pointer transition-colors truncate">
+                  {lib.name}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -187,47 +198,59 @@ export function KontaktBrowser() {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredLibraries.map(lib => (
-                <div 
-                  key={lib.id}
-                  className="group bg-neutral-950 rounded-xl border border-neutral-800 p-4 hover:border-red-500/50 transition-all cursor-pointer relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-1 hover:text-red-500"><MoreVertical size={14} /></button>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 bg-neutral-900 rounded-lg flex items-center justify-center border border-neutral-800 group-hover:border-red-500/30 transition-colors">
-                      <FileCode size={24} className="text-neutral-700 group-hover:text-red-500/50 transition-colors" />
+            {isLoading ? (
+              <div className="h-full flex items-center justify-center">
+                <Loader2 size={28} className="animate-spin text-neutral-600" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredLibraries.map(lib => (
+                  <div 
+                    key={lib.id}
+                    className="group bg-neutral-950 rounded-xl border border-neutral-800 p-4 hover:border-red-500/50 transition-all cursor-pointer relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleToggleFavorite(lib); }}
+                        className="p-1 hover:text-yellow-400"
+                        title={lib.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                      >
+                        <Star size={14} className={lib.isFavorite ? 'fill-yellow-500 text-yellow-500' : ''} />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-bold text-neutral-200 truncate group-hover:text-red-500 transition-colors">{lib.name}</h3>
-                      <p className="text-[10px] text-neutral-500 font-mono uppercase mt-0.5">{lib.vendor}</p>
+                    
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 bg-neutral-900 rounded-lg flex items-center justify-center border border-neutral-800 group-hover:border-red-500/30 transition-colors">
+                        <FileCode size={24} className="text-neutral-700 group-hover:text-red-500/50 transition-colors" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xs font-bold text-neutral-200 truncate group-hover:text-red-500 transition-colors">{lib.name}</h3>
+                        <p className="text-[10px] text-neutral-500 font-mono uppercase mt-0.5">{lib.vendor}</p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-4 pt-4 border-t border-neutral-900 flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] text-neutral-600 uppercase font-bold tracking-tighter">Instruments</span>
-                      <span className="text-[11px] font-mono text-neutral-400">{lib.instruments}</span>
+                    <div className="mt-4 pt-4 border-t border-neutral-900 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-neutral-600 uppercase font-bold tracking-tighter">Instruments</span>
+                        <span className="text-[11px] font-mono text-neutral-400">{lib.instruments}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[9px] text-neutral-600 uppercase font-bold tracking-tighter">Size</span>
+                        <span className="text-[11px] font-mono text-neutral-400">{lib.size}</span>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-neutral-600 uppercase font-bold tracking-tighter">Size</span>
-                      <span className="text-[11px] font-mono text-neutral-400">{lib.size}</span>
-                    </div>
+
+                    {lib.isFavorite && (
+                      <div className="absolute bottom-0 right-0 p-1">
+                        <Star size={10} className="text-yellow-500 fill-yellow-500" />
+                      </div>
+                    )}
                   </div>
+                ))}
+              </div>
+            )}
 
-                  {lib.isFavorite && (
-                    <div className="absolute bottom-0 right-0 p-1">
-                      <Star size={10} className="text-yellow-500 fill-yellow-500" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {filteredLibraries.length === 0 && (
+            {!isLoading && filteredLibraries.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-neutral-600 gap-4 py-20">
                 <Library size={48} className="opacity-20" />
                 <div className="text-center">
@@ -241,8 +264,8 @@ export function KontaktBrowser() {
           {/* Status Bar */}
           <div className="mt-auto pt-4 border-t border-neutral-800 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-[10px] font-mono text-neutral-500 uppercase">Total: {mockLibraries.length} Libraries</span>
-              <span className="text-[10px] font-mono text-neutral-500 uppercase">Disk Usage: 112.5 GB</span>
+              <span className="text-[10px] font-mono text-neutral-500 uppercase">Total: {libraries.length} Libraries</span>
+              <span className="text-[10px] font-mono text-neutral-500 uppercase">Filtered: {filteredLibraries.length}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono text-neutral-500 uppercase">Supported Formats: .nki, .nkx, .nkm, .nicnt</span>
@@ -253,3 +276,4 @@ export function KontaktBrowser() {
     </div>
   );
 }
+

@@ -395,7 +395,7 @@ export function StemSeparator() {
                 </div>
               </div>
 
-              {/* Mini waveform (mock) */}
+              {/* Mini waveform preview */}
               <div className="h-10 rounded-lg overflow-hidden bg-bg-surface/50 border border-border-main/50 relative">
                 {stem.ready ? (
                   <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">

@@ -318,7 +318,7 @@ export function VinylScratchPro() {
                 <rect x="10%" y="0" width="30%" height="100%" fill="var(--brand-primary)" opacity="0.06" />
                 <line x1="10%" y1="0" x2="10%" y2="100%" stroke="var(--brand-primary)" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
                 <line x1="40%" y1="0" x2="40%" y2="100%" stroke="var(--brand-primary)" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
-                {/* Fake waveform */}
+                {/* Waveform display */}
                 <g fill="var(--brand-primary)" opacity="0.7">
                   {waveformData.map((val, i) => (
                     <rect

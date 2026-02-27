@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Cpu, 
   Search, 
@@ -10,32 +10,30 @@ import {
   Trash2,
   FolderOpen,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
-
-interface Plugin {
-  id: string;
-  name: string;
-  vendor: string;
-  type: 'VST2' | 'VST3';
-  category: string;
-  isEnabled: boolean;
-  latency: number;
-}
+import { fetchPlugins, togglePlugin as apiTogglePlugin, deletePlugin as apiDeletePlugin, type Plugin } from '../lib/api';
 
 export function VSTManager() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [plugins, setPlugins] = useState<Plugin[]>([
-    { id: 'v1', name: 'Lead Synth', vendor: 'Built-in', type: 'VST3', category: 'Synth', isEnabled: true, latency: 0 },
-    { id: 'v2', name: 'Parametric EQ', vendor: 'Built-in', type: 'VST3', category: 'EQ', isEnabled: true, latency: 12 },
-    { id: 'v3', name: 'Vintage Reverb', vendor: 'Built-in', type: 'VST2', category: 'Reverb', isEnabled: true, latency: 0 },
-    { id: 'v4', name: 'Atmosphere Pad', vendor: 'Built-in', type: 'VST3', category: 'Synth', isEnabled: true, latency: 0 },
-    { id: 'v5', name: 'Tape Saturator', vendor: 'Built-in', type: 'VST2', category: 'Distortion', isEnabled: false, latency: 0 },
-    { id: 'v6', name: 'Retro Color', vendor: 'Built-in', type: 'VST3', category: 'FX', isEnabled: true, latency: 0 },
-  ]);
+  const loadPlugins = useCallback(async () => {
+    try {
+      const data = await fetchPlugins();
+      setPlugins(data);
+    } catch {
+      // keep empty on error
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadPlugins(); }, [loadPlugins]);
 
   const handleScan = () => {
     setIsScanning(true);
@@ -45,6 +43,7 @@ export function VSTManager() {
         if (prev >= 100) {
           clearInterval(interval);
           setIsScanning(false);
+          loadPlugins();
           return 100;
         }
         return prev + 5;
@@ -52,8 +51,26 @@ export function VSTManager() {
     }, 100);
   };
 
-  const togglePlugin = (id: string) => {
-    setPlugins(plugins.map(p => p.id === id ? { ...p, isEnabled: !p.isEnabled } : p));
+  const togglePlugin = async (id: string) => {
+    const plugin = plugins.find(p => p.id === id);
+    if (!plugin) return;
+    const next = !plugin.isEnabled;
+    setPlugins(prev => prev.map(p => p.id === id ? { ...p, isEnabled: next } : p));
+    try {
+      await apiTogglePlugin(id, next);
+    } catch {
+      setPlugins(prev => prev.map(p => p.id === id ? { ...p, isEnabled: plugin.isEnabled } : p));
+    }
+  };
+
+  const removePlugin = async (id: string) => {
+    const snapshot = plugins;
+    setPlugins(prev => prev.filter(p => p.id !== id));
+    try {
+      await apiDeletePlugin(id);
+    } catch {
+      setPlugins(snapshot);
+    }
   };
 
   const filteredPlugins = plugins.filter(p => 
@@ -155,59 +172,65 @@ export function VSTManager() {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-neutral-900 z-10">
-                <tr className="border-b border-neutral-800">
-                  <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Status</th>
-                  <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Plugin Name</th>
-                  <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Vendor</th>
-                  <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Type</th>
-                  <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Category</th>
-                  <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPlugins.map(plugin => (
-                  <tr key={plugin.id} className="border-b border-neutral-800/50 hover:bg-neutral-800/30 transition-colors group">
-                    <td className="px-6 py-4">
-                      <button 
-                        onClick={() => togglePlugin(plugin.id)}
-                        className={`p-1.5 rounded-full transition-all ${
-                          plugin.isEnabled ? 'bg-emerald-500/10 text-emerald-500' : 'bg-neutral-800 text-neutral-600'
-                        }`}
-                      >
-                        <Power size={14} />
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-neutral-200">{plugin.name}</span>
-                        {plugin.latency > 0 && (
-                          <span className="text-[9px] text-amber-500 font-mono">Latency: {plugin.latency} samples</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-neutral-400">{plugin.vendor}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${
-                        plugin.type === 'VST3' ? 'border-blue-500/30 text-blue-500 bg-blue-500/5' : 'border-neutral-700 text-neutral-500 bg-neutral-800'
-                      }`}>
-                        {plugin.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-neutral-500">{plugin.category}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1.5 hover:text-blue-500 transition-colors" title="Open GUI"><ExternalLink size={14} /></button>
-                        <button className="p-1.5 hover:text-red-500 transition-colors" title="Remove"><Trash2 size={14} /></button>
-                      </div>
-                    </td>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 size={28} className="animate-spin text-neutral-600" />
+              </div>
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-neutral-900 z-10">
+                  <tr className="border-b border-neutral-800">
+                    <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Plugin Name</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Vendor</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Type</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Category</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredPlugins.map(plugin => (
+                    <tr key={plugin.id} className="border-b border-neutral-800/50 hover:bg-neutral-800/30 transition-colors group">
+                      <td className="px-6 py-4">
+                        <button 
+                          onClick={() => togglePlugin(plugin.id)}
+                          className={`p-1.5 rounded-full transition-all ${
+                            plugin.isEnabled ? 'bg-emerald-500/10 text-emerald-500' : 'bg-neutral-800 text-neutral-600'
+                          }`}
+                        >
+                          <Power size={14} />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-neutral-200">{plugin.name}</span>
+                          {plugin.latency > 0 && (
+                            <span className="text-[9px] text-amber-500 font-mono">Latency: {plugin.latency} samples</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-neutral-400">{plugin.vendor}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${
+                          plugin.type === 'VST3' ? 'border-blue-500/30 text-blue-500 bg-blue-500/5' : 'border-neutral-700 text-neutral-500 bg-neutral-800'
+                        }`}>
+                          {plugin.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-neutral-500">{plugin.category}</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="p-1.5 hover:text-blue-500 transition-colors" title="Open GUI"><ExternalLink size={14} /></button>
+                          <button onClick={() => removePlugin(plugin.id)} className="p-1.5 hover:text-red-500 transition-colors" title="Remove"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
 
-            {filteredPlugins.length === 0 && (
+            {!isLoading && filteredPlugins.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-neutral-600 gap-4">
                 <Cpu size={48} className="opacity-20" />
                 <p className="text-sm font-bold uppercase tracking-widest">No Plugins Found</p>
@@ -224,11 +247,11 @@ export function VSTManager() {
               </div>
               <div className="flex items-center gap-1.5">
                 <AlertCircle size={12} className="text-neutral-600" />
-                <span className="text-[10px] font-mono text-neutral-500 uppercase">{plugins.filter(p => !p.isEnabled).length} Blacklisted</span>
+                <span className="text-[10px] font-mono text-neutral-500 uppercase">{plugins.filter(p => !p.isEnabled).length} Disabled</span>
               </div>
             </div>
             <div className="text-[10px] font-mono text-neutral-600 uppercase">
-              Total Scan Time: 1.2s
+              Total: {plugins.length} plugins
             </div>
           </div>
         </div>
@@ -236,3 +259,4 @@ export function VSTManager() {
     </div>
   );
 }
+

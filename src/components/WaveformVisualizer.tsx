@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { UploadCloud, Scissors, Maximize, Wind, RotateCcw, Layers, Zap, Music, Plus, FileCode } from 'lucide-react';
 import { Knob } from './Knob';
 
@@ -17,8 +17,11 @@ export function WaveformVisualizer() {
   // ADSR State
   const [adsr, setAdsr] = useState({ a: 10, d: 20, s: 70, r: 30 });
 
-  // Generate some fake waveform data
-  const waveform = Array.from({ length: 150 }, () => Math.random() * 0.8 + 0.1);
+  // Stable waveform shape (deterministic via seeded Math.sin pattern)
+  const waveform = useMemo(() => Array.from({ length: 150 }, (_, i) => {
+    const t = i / 150;
+    return Math.abs(Math.sin(t * Math.PI * 7 + 1.2) * 0.45 + Math.sin(t * Math.PI * 23) * 0.25 + 0.35);
+  }), []);
   const slices = [20, 45, 70, 85];
   const stems = ['Full', 'Drums', 'Bass', 'Vocals', 'Other'];
 
