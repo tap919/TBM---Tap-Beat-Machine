@@ -12,7 +12,6 @@ import {
   Repeat,
   Scissors,
   UploadCloud,
-  ChevronDown,
 } from 'lucide-react';
 
 type ScratchStyle = {
