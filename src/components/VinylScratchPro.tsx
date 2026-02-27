@@ -28,6 +28,9 @@ import {
   RefreshCw,
   Keyboard,
   GitBranch,
+  Send,
+  Radio,
+  Plug,
 } from 'lucide-react';
 
 type ScratchStyle = {
