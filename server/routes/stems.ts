@@ -234,13 +234,16 @@ router.get('/health', async (_req, res) => {
     const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
     let settled = false;
     const timeoutId = setTimeout(() => {
-      console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
+      console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms (${HEALTH_CHECK_TIMEOUT_MS / 1000}s)`);
       proc.kill('SIGTERM');
       finish(false);
     }, HEALTH_CHECK_TIMEOUT_MS);
     function finish(value: boolean) {
       if (settled) return;
       settled = true;
+      if (proc.exitCode === null && proc.pid && !proc.killed) {
+        proc.kill('SIGTERM');
+      }
       clearTimeout(timeoutId);
       proc.removeAllListeners('error');
       proc.removeAllListeners('close');
@@ -357,8 +360,8 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
   const stream = fs.createReadStream(stemFile);
   stream.on('error', (err) => {
     if (!res.headersSent) {
-      const ioError = err as NodeJS.ErrnoException;
-      if (ioError.code === 'ENOENT') {
+      const errWithCode = err as NodeJS.ErrnoException;
+      if (errWithCode.code === 'ENOENT') {
         res.status(404).json({ error: 'Stem file not found on disk' });
       } else {
         res.status(500).json({ error: 'Failed to stream stem file' });
