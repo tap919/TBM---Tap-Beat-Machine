@@ -229,8 +229,11 @@ const router = Router();
  * Returns whether demucs is installed and which models are cached.
  */
 router.get('/health', async (_req, res) => {
-  const demucsCheck = spawnSync(PYTHON, ['-m', 'demucs', '--help'], { encoding: 'utf8' });
-  const installed = demucsCheck.status === 0;
+  const installed = await new Promise<boolean>((resolve) => {
+    const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
+    proc.on('error', () => resolve(false));
+    proc.on('close', (code) => resolve(code === 0));
+  });
 
   // Check torch hub cache for .th files (demucs model weights)
   const torchCacheDir = path.join(os.homedir(), '.cache', 'torch', 'hub', 'checkpoints');
@@ -346,7 +349,7 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
   const stream = fs.createReadStream(stemFile);
   stream.on('error', () => {
     if (!res.headersSent) {
-      res.status(404).json({ error: 'Stem file not found on disk' });
+      res.status(500).json({ error: 'Failed to stream stem file' });
     }
   });
   stream.pipe(res);
