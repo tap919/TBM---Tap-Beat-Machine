@@ -231,8 +231,20 @@ const router = Router();
 router.get('/health', async (_req, res) => {
   const installed = await new Promise<boolean>((resolve) => {
     const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
-    proc.on('error', () => resolve(false));
-    proc.on('close', (code) => resolve(code === 0));
+    let settled = false;
+    let timeoutId: NodeJS.Timeout;
+    const finish = (value: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      resolve(value);
+    };
+    timeoutId = setTimeout(() => {
+      proc.kill();
+      finish(false);
+    }, 8000);
+    proc.on('error', () => finish(false));
+    proc.on('close', (code) => finish(code === 0));
   });
 
   // Check torch hub cache for .th files (demucs model weights)
@@ -351,7 +363,6 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
     stream.pipe(res);
   });
   stream.on('error', (err) => {
-    stream.destroy();
     if (!res.headersSent) {
       res.status(500).json({ error: 'Failed to stream stem file' });
     } else {
