@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Brain, Play, Square, ChevronRight,
   Music, Mic2, Piano, Guitar, AudioLines, Drum,
@@ -96,10 +96,18 @@ export function SessionMusician() {
   const [intensity, setIntensity] = useState(70);
   const [complexity, setComplexity] = useState(50);
 
+  const learnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (learnTimerRef.current !== null) clearTimeout(learnTimerRef.current);
+    };
+  }, []);
+
   const handleLearn = useCallback(() => {
     setIsLearning(true);
     setAnalysis(null);
-    setTimeout(() => {
+    learnTimerRef.current = setTimeout(() => {
       setIsLearning(false);
       setAnalysis(fakeAnalyze());
     }, 1600);

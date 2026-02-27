@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Play, Square, Circle, ZoomIn, ZoomOut, Plus,
   List, LayoutGrid, Music2, AlignLeft
@@ -129,6 +129,12 @@ function TrackView({ tracks, zoom }: { tracks: Track[]; zoom: number }) {
   const [activeTrack, setActiveTrack] = useState(0);
   const [tool, setTool] = useState<'pencil' | 'select'>('pencil');
   const [localTracks, setLocalTracks] = useState<Track[]>(tracks);
+
+  // Sync local editable tracks when the active sequence changes
+  useEffect(() => {
+    setLocalTracks(tracks);
+    setActiveTrack(tracks[0]?.id ?? 0);
+  }, [tracks]);
 
   const beatWidth = BEAT_W * zoom;
 

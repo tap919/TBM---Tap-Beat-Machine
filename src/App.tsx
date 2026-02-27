@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { WaveformVisualizer } from './components/WaveformVisualizer';
 import { Mixer808 } from './components/Mixer808';
 import { FXMacros } from './components/FXMacros';
@@ -29,6 +29,7 @@ import {
 
 const AUTO_SAVE_KEY = 'omnichop_autosave_state';
 const AUTO_SAVE_INTERVAL_MS = 15000;
+const KNOWN_TABS = ['sampler', 'pianoroll', 'session', 'library', 'plugins', 'theme', 'drums', 'hats', 'chords', 'mod', 'mixer', 'settings'] as const;
 
 export default function App() {
   const [showExportModal, setShowExportModal] = useState(false);
@@ -42,15 +43,17 @@ export default function App() {
   const [activeState, setActiveState] = useState<'A' | 'B'>('A');
   const [isPanic, setIsPanic] = useState(false);
 
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // ── Auto-save: load on mount ──
   useEffect(() => {
     try {
       const saved = localStorage.getItem(AUTO_SAVE_KEY);
       if (saved) {
-        const { tab, key, state } = JSON.parse(saved);
-        if (tab) setActiveTab(tab);
-        if (key) setProjectKey(key);
-        if (state) setActiveState(state);
+        const { tab, key, state } = JSON.parse(saved) as Record<string, unknown>;
+        if (typeof tab === 'string' && (KNOWN_TABS as readonly string[]).includes(tab)) setActiveTab(tab);
+        if (typeof key === 'string' && key.length > 0) setProjectKey(key);
+        if (state === 'A' || state === 'B') setActiveState(state);
         const ts = localStorage.getItem(AUTO_SAVE_KEY + '_ts');
         if (ts) setLastSavedAt(new Date(ts));
       }
@@ -66,13 +69,17 @@ export default function App() {
       localStorage.setItem(AUTO_SAVE_KEY + '_ts', now.toISOString());
       setLastSavedAt(now);
       setIsAutoSaving(true);
-      setTimeout(() => setIsAutoSaving(false), 1500);
+      if (autoSaveTimerRef.current !== null) clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = setTimeout(() => setIsAutoSaving(false), 1500);
     } catch { /* storage unavailable */ }
   }, [activeTab, projectKey, activeState]);
 
   useEffect(() => {
     const interval = setInterval(performAutoSave, AUTO_SAVE_INTERVAL_MS);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (autoSaveTimerRef.current !== null) clearTimeout(autoSaveTimerRef.current);
+    };
   }, [performAutoSave]);
 
   const handlePanic = () => {
