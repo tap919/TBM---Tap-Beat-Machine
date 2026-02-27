@@ -327,7 +327,11 @@ router.get('/jobs/:jobId/download/:stem', (req: Request, res: Response) => {
   }
 
   // Find the file under outputDir/<model>/<trackNameNoExt>/<stem>.mp3
-  const trackNameNoExt = path.basename(job.trackName, path.extname(job.trackName));
+  // Prefer the sanitized trackNameNoExt used for Demucs output (if present),
+  // and fall back to deriving it from the original trackName for older jobs.
+  const trackNameNoExt =
+    (job as any).trackNameNoExt ??
+    path.basename(job.trackName, path.extname(job.trackName));
   const stemFile = path.join(job.outputDir, job.model, trackNameNoExt, `${stemName}.mp3`);
 
   if (!fs.existsSync(stemFile)) {
