@@ -235,7 +235,7 @@ router.get('/health', async (_req, res) => {
     let settled = false;
     const timeoutId = setTimeout(() => {
       console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
-      proc.kill();
+      proc.kill('SIGTERM');
       finish(false);
     }, HEALTH_CHECK_TIMEOUT_MS);
     function finish(value: boolean) {
@@ -351,20 +351,18 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
   // trackNameNoExt is set by runDemucs from the sanitized on-disk filename
   const stemFile = path.join(job.outputDir, job.model, job.trackNameNoExt, `${stemName}.mp3`);
 
-  try {
-    await fs.promises.access(stemFile, fs.constants.R_OK);
-  } catch {
-    res.status(404).json({ error: 'Stem file not found on disk' });
-    return;
-  }
-
   res.setHeader('Content-Type', 'audio/mpeg');
   res.setHeader('Content-Disposition', `attachment; filename="${stemName}.mp3"`);
   res.setHeader('Accept-Ranges', 'bytes');
   const stream = fs.createReadStream(stemFile);
   stream.on('error', (err) => {
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Failed to stream stem file' });
+      const ioError = err as NodeJS.ErrnoException;
+      if (ioError.code === 'ENOENT') {
+        res.status(404).json({ error: 'Stem file not found on disk' });
+      } else {
+        res.status(500).json({ error: 'Failed to stream stem file' });
+      }
     } else {
       res.destroy(err);
     }
