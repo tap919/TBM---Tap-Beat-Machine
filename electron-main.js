@@ -8,8 +8,8 @@ function createWindow() {
     resizable: false, // Fixed size like a real VST
     title: 'TBM 1.0',
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
     },
     autoHideMenuBar: true,
   });

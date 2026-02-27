@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Cpu, 
   Search, 
@@ -21,6 +21,7 @@ export function VSTManager() {
   const [scanProgress, setScanProgress] = useState(0);
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadPlugins = useCallback(async () => {
     try {
@@ -35,13 +36,20 @@ export function VSTManager() {
 
   useEffect(() => { loadPlugins(); }, [loadPlugins]);
 
+  // Clean up any in-progress scan on unmount
+  useEffect(() => {
+    return () => { if (scanIntervalRef.current !== null) clearInterval(scanIntervalRef.current); };
+  }, []);
+
   const handleScan = () => {
+    if (scanIntervalRef.current !== null) clearInterval(scanIntervalRef.current);
     setIsScanning(true);
     setScanProgress(0);
-    const interval = setInterval(() => {
+    scanIntervalRef.current = setInterval(() => {
       setScanProgress(prev => {
         if (prev >= 100) {
-          clearInterval(interval);
+          if (scanIntervalRef.current !== null) clearInterval(scanIntervalRef.current);
+          scanIntervalRef.current = null;
           setIsScanning(false);
           loadPlugins();
           return 100;

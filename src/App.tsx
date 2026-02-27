@@ -43,6 +43,9 @@ export default function App() {
   const [isPanic, setIsPanic] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
+  const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const panicTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
   // ── Undoable project snapshot (key + A/B state) ──
@@ -134,15 +137,25 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [handleUndo, handleRedo]);
 
+  // Cleanup notification and panic timers on unmount
+  useEffect(() => {
+    return () => {
+      if (notifTimerRef.current !== null) clearTimeout(notifTimerRef.current);
+      if (panicTimerRef.current !== null) clearTimeout(panicTimerRef.current);
+    };
+  }, []);
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    if (notifTimerRef.current !== null) clearTimeout(notifTimerRef.current);
+    setNotification({ type, message });
+    notifTimerRef.current = setTimeout(() => { setNotification(null); notifTimerRef.current = null; }, 3000);
+  };
+
   const handlePanic = () => {
     setIsPanic(true);
     showNotification('error', 'AUDIO ENGINE RESET (PANIC)');
-    setTimeout(() => setIsPanic(false), 1000);
-  };
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
+    if (panicTimerRef.current !== null) clearTimeout(panicTimerRef.current);
+    panicTimerRef.current = setTimeout(() => { setIsPanic(false); panicTimerRef.current = null; }, 1000);
   };
 
   const renderContent = () => {

@@ -49,13 +49,21 @@ router.patch('/:id', (req, res) => {
     res.status(400).json({ error: 'isEnabled (boolean) is required' });
     return;
   }
-  db.prepare('UPDATE plugins SET is_enabled = ? WHERE id = ?').run(isEnabled ? 1 : 0, req.params.id);
+  const result = db.prepare('UPDATE plugins SET is_enabled = ? WHERE id = ?').run(isEnabled ? 1 : 0, req.params.id);
+  if (result.changes === 0) {
+    res.status(404).json({ error: 'Plugin not found' });
+    return;
+  }
   res.json({ ok: true });
 });
 
 // ── DELETE /api/plugins/:id ───────────────────────────────────────────────────
 router.delete('/:id', (req, res) => {
-  db.prepare('DELETE FROM plugins WHERE id = ?').run(req.params.id);
+  const result = db.prepare('DELETE FROM plugins WHERE id = ?').run(req.params.id);
+  if (result.changes === 0) {
+    res.status(404).json({ error: 'Plugin not found' });
+    return;
+  }
   res.json({ ok: true });
 });
 

@@ -8,6 +8,11 @@ import db from '../db.js';
 
 const router = Router();
 
+const ALLOWED_SETTINGS_KEYS = new Set([
+  'driver', 'bufferSize', 'sampleRate', 'multiCore', 'highPrecision',
+  'oversampling', 'uiScale', 'midiDevice', 'themeId', 'autoSaveInterval',
+]);
+
 // ── GET /api/settings ─────────────────────────────────────────────────────────
 router.get('/', (_req, res) => {
   const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
@@ -24,6 +29,14 @@ router.post('/', (req, res) => {
     res.status(400).json({ error: 'body must be a key/value object' });
     return;
   }
+
+  // Only allow recognised setting keys to prevent arbitrary writes
+  const unknownKeys = Object.keys(body).filter(k => !ALLOWED_SETTINGS_KEYS.has(k));
+  if (unknownKeys.length > 0) {
+    res.status(400).json({ error: `Unknown settings keys: ${unknownKeys.join(', ')}` });
+    return;
+  }
+
   const upsert = db.prepare(`
     INSERT INTO settings (key, value) VALUES (?, ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value

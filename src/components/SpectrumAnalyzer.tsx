@@ -13,11 +13,16 @@ export function SpectrumAnalyzer() {
 
   useEffect(() => {
     let ctx: AudioContext | null = null;
+    let cancelled = false;
 
     const start = async () => {
       try {
         // Request microphone to get a real signal
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        if (cancelled) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
         streamRef.current = stream;
         ctx = new AudioContext();
         const source = ctx.createMediaStreamSource(stream);
@@ -93,7 +98,9 @@ export function SpectrumAnalyzer() {
     animRef.current = requestAnimationFrame(draw);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(animRef.current);
+      analyserRef.current = null;
       streamRef.current?.getTracks().forEach(t => t.stop());
       ctx?.close();
     };

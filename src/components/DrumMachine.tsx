@@ -69,7 +69,7 @@ export function DrumMachine() {
             <input 
               type="number" 
               value={bpm} 
-              onChange={(e) => setBpm(parseInt(e.target.value))}
+              onChange={(e) => { const n = parseInt(e.target.value, 10); if (!Number.isNaN(n)) setBpm(n); }}
               className="w-12 bg-transparent text-red-500 font-bold text-sm outline-none"
             />
           </div>
@@ -110,7 +110,7 @@ export function DrumMachine() {
               <input 
                 type="range" 
                 value={swing} 
-                onChange={(e) => setSwing(parseInt(e.target.value))}
+                onChange={(e) => { const n = parseInt(e.target.value, 10); if (!Number.isNaN(n)) setSwing(n); }}
                 className="w-24 h-1 bg-neutral-800 appearance-none accent-red-500"
               />
               <span className="text-[10px] font-mono text-neutral-400">{swing}%</span>

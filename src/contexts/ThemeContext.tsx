@@ -85,8 +85,16 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const THEME_STORAGE_KEY = 'tbm_theme_id';
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentThemeId, setCurrentThemeId] = useState('tbm-default');
+  const [currentThemeId, setCurrentThemeId] = useState(() => {
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved && (themes.some(t => t.id === saved) || saved === 'custom')) return saved;
+    } catch { /* storage unavailable */ }
+    return 'tbm-default';
+  });
   const [customTheme, setCustomTheme] = useState<Theme>({
     ...themes[0],
     id: 'custom',
@@ -107,7 +115,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--text-main', currentTheme.text);
   }, [currentTheme]);
 
-  const setTheme = (id: string) => setCurrentThemeId(id);
+  const setTheme = (id: string) => {
+    setCurrentThemeId(id);
+    try { localStorage.setItem(THEME_STORAGE_KEY, id); } catch { /* storage unavailable */ }
+  };
   
   const updateCustomTheme = (updates: Partial<Theme>) => {
     setCustomTheme(prev => ({ ...prev, ...updates }));

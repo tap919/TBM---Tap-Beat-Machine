@@ -21,7 +21,7 @@ export function ModMatrix() {
 
   const addRoute = () => {
     const newRoute: ModRoute = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).slice(2, 11),
       source: sources[0],
       target: targets[0],
       amount: 50,
