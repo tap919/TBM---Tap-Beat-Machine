@@ -3,6 +3,8 @@
 @theme {
   --color-brand: var(--brand-primary);
   --color-brand-glow: var(--brand-primary-glow);
+  --color-indicator: var(--indicator);
+  --color-indicator-glow: var(--indicator-glow);
   --color-bg-main: var(--bg-main);
   --color-bg-surface: var(--bg-surface);
   --color-border-main: var(--border-main);

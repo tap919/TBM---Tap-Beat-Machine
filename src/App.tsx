@@ -21,15 +21,16 @@ import { VSTManager } from './components/VSTManager';
 import { ThemeSettings } from './components/ThemeSettings';
 import { PianoRoll } from './components/PianoRoll';
 import { SessionMusician } from './components/SessionMusician';
+import { VinylScratchPro } from './components/VinylScratchPro';
 import { 
   Download, X, Settings, Save, FileAudio, FileMusic, 
   ChevronDown, AlertCircle, CheckCircle2, Undo2, Redo2, 
   RotateCcw, ZapOff, Activity, Info, BarChart3, Music, Cpu, Palette
 } from 'lucide-react';
 
-const AUTO_SAVE_KEY = 'omnichop_autosave_state';
+const AUTO_SAVE_KEY = 'tbm_autosave_state';
 const AUTO_SAVE_INTERVAL_MS = 15000;
-const KNOWN_TABS = ['sampler', 'pianoroll', 'session', 'library', 'plugins', 'theme', 'drums', 'hats', 'chords', 'mod', 'mixer', 'settings'] as const;
+const KNOWN_TABS = ['sampler', 'pianoroll', 'session', 'library', 'plugins', 'theme', 'drums', 'hats', 'chords', 'mod', 'mixer', 'vinyl', 'settings'] as const;
 
 export default function App() {
   const [showExportModal, setShowExportModal] = useState(false);
@@ -208,6 +209,12 @@ export default function App() {
             <SessionMusician />
           </div>
         );
+      case 'vinyl':
+        return (
+          <div className="flex-1 p-5 overflow-hidden">
+            <VinylScratchPro />
+          </div>
+        );
       case 'settings':
         return (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -286,13 +293,13 @@ export default function App() {
         {/* Right side of utility bar */}
         <div className="flex items-center gap-4">
           <div className={`flex items-center gap-1.5 transition-all duration-500 ${isAutoSaving ? 'opacity-100' : 'opacity-25'}`}>
-            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isAutoSaving ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-500'}`}></div>
+            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isAutoSaving ? 'bg-indicator animate-pulse' : 'bg-neutral-500'}`}></div>
             <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
               {isAutoSaving ? 'Auto-Saving…' : lastSavedAt ? `Saved ${lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Auto-Save'}
             </span>
           </div>
           <div className="flex items-center gap-3 text-[10px] font-mono">
-            <span className="flex items-center gap-1 text-emerald-500"><Activity size={9} /> 12%</span>
+            <span className="flex items-center gap-1 text-indicator"><Activity size={9} /> 12%</span>
             <span className="text-blue-400">1.2 GB</span>
           </div>
         </div>
@@ -303,13 +310,12 @@ export default function App() {
         {/* Branding */}
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-3">
-            {/* Animated logo dot */}
-            <div className="relative w-4 h-4 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full bg-brand opacity-20 animate-pulse"></div>
-              <div className="w-3 h-3 rounded-full bg-brand shadow-[0_0_12px_var(--brand-primary-glow)]"></div>
+            {/* Logo placeholder */}
+            <div className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-brand/30 bg-brand/10 overflow-hidden">
+              <span className="text-[8px] font-mono text-brand/50 uppercase select-none">Logo</span>
             </div>
             <h1 className="text-[15px] font-black tracking-[0.22em] text-neutral-100 uppercase select-none">
-              OmniChop<span className="text-brand">_</span>Pro
+              TBM<span className="text-brand">_</span>1.0
             </h1>
           </div>
 
@@ -438,13 +444,13 @@ export default function App() {
                   <div className="w-5 h-5 rounded-md bg-brand/20 border border-brand/40 flex items-center justify-center">
                     <span className="text-brand text-[10px] font-black">2</span>
                   </div>
-                  VST3 / AU Plugin (JUCE)
+                  VST3 / AU Plugin (C++ Framework)
                 </h3>
-                <p className="text-neutral-400 text-[12px]">To compile into a VST3 plugin for Ableton / FL Studio, use JUCE with a Web View wrapper.</p>
+                <p className="text-neutral-400 text-[12px]">To compile into a VST3 plugin for your DAW, use a C++ framework with a Web View wrapper.</p>
                 <ul className="space-y-1.5 text-neutral-400 text-[12px]">
                   <li><span className="text-white font-bold">DSP Engine (C++):</span> Handles audio processing and MIDI routing.</li>
                   <li><span className="text-white font-bold">Frontend (React):</span> This UI you're viewing now.</li>
-                  <li><span className="text-white font-bold">Bridge:</span> JUCE's <code className="text-brand bg-brand/10 px-1 rounded">WebBrowserComponent</code> passes JSON between React and C++.</li>
+                  <li><span className="text-white font-bold">Bridge:</span> The framework's <code className="text-brand bg-brand/10 px-1 rounded">WebBrowserComponent</code> passes JSON between React and C++.</li>
                 </ul>
                 <p className="text-neutral-500 text-[11px]">
                   See <code className="text-neutral-300">VST3_INTEGRATION.md</code> for the full C++ boilerplate.

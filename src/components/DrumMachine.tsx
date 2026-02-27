@@ -105,14 +105,14 @@ export function DrumMachine() {
             </button>
             <div className="relative group">
               <button className="flex items-center gap-2 px-4 py-2 bg-brand hover:opacity-90 text-white rounded font-bold text-xs uppercase transition-colors shadow-lg shadow-brand/20">
-                <Plus size={14} /> Load MPC
+                <Plus size={14} /> Load Kit
               </button>
               <div className="absolute right-0 top-full mt-2 w-48 bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-2 flex flex-col gap-1">
                 <button className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-800 rounded text-[10px] text-neutral-300 transition-colors text-left">
-                  <FileCode size={12} className="text-red-500" /> .XPM (MPC Program)
+                  <FileCode size={12} className="text-red-500" /> .XPM (Drum Program)
                 </button>
                 <button className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-800 rounded text-[10px] text-neutral-300 transition-colors text-left">
-                  <FileCode size={12} className="text-blue-500" /> .SXQ (MPC Sequence)
+                  <FileCode size={12} className="text-blue-500" /> .SXQ (Drum Sequence)
                 </button>
               </div>
             </div>
@@ -125,7 +125,7 @@ export function DrumMachine() {
         <div className="flex-1 flex flex-col gap-4 bg-neutral-900 rounded-lg border border-neutral-800 p-4 min-w-0">
           <div className="flex justify-between items-center">
             <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-2">
-              <Music size={14} /> Piano Roll (FL Style)
+              <Music size={14} /> Piano Roll
             </h3>
             <div className="flex gap-2">
               <button className="flex items-center gap-2 px-3 py-1.5 rounded text-[10px] font-bold uppercase transition-all border bg-neutral-800 text-neutral-400 border-neutral-700 hover:text-white">
@@ -223,11 +223,11 @@ export function DrumMachine() {
           </div>
         </div>
 
-        {/* Right: MPC Pads */}
+        {/* Right: Drum Pads */}
         <div className="w-80 flex flex-col gap-4">
           <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4 flex flex-col gap-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest">MPC Pads</h3>
+              <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Drum Pads</h3>
               <div className="flex gap-2">
                 <button 
                   onClick={() => setNoteRepeat(!noteRepeat)}

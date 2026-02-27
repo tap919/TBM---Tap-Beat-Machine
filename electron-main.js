@@ -6,7 +6,7 @@ function createWindow() {
     width: 900,
     height: 600,
     resizable: false, // Fixed size like a real VST
-    title: 'OmniChop Pro',
+    title: 'TBM 1.0',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

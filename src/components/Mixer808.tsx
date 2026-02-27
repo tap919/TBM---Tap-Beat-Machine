@@ -42,7 +42,7 @@ export function Mixer808() {
       <div className="mt-2 flex items-center justify-between bg-neutral-950 p-2 rounded border border-neutral-800 group hover:border-blue-500/50 transition-all cursor-pointer">
         <div className="flex items-center gap-2">
           <Cpu className="w-3 h-3 text-blue-500" />
-          <span className="text-[9px] font-bold text-neutral-400 uppercase">Insert: FabFilter Pro-Q 3</span>
+          <span className="text-[9px] font-bold text-neutral-400 uppercase">Insert: Parametric EQ</span>
         </div>
         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
       </div>

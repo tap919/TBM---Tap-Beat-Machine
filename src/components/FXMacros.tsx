@@ -51,7 +51,7 @@ export function FXMacros() {
           <div className="flex items-center justify-between px-3 py-2 bg-neutral-950 rounded border border-neutral-800 group hover:border-blue-500/50 transition-all cursor-pointer">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
-              <span className="text-[10px] font-bold text-neutral-300">Serum</span>
+              <span className="text-[10px] font-bold text-neutral-300">Synth Insert</span>
             </div>
             <span className="text-[8px] font-mono text-neutral-600 uppercase">VST3</span>
           </div>

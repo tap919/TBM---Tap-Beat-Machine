@@ -15,7 +15,7 @@ import {
   FileCode
 } from 'lucide-react';
 
-interface KontaktLibrary {
+interface SampleLibrary {
   id: string;
   name: string;
   vendor: string;
@@ -49,14 +49,14 @@ export function KontaktBrowser() {
     "Bowed"
   ];
 
-  const mockLibraries: KontaktLibrary[] = [
-    { id: '1', name: 'The Giant', vendor: 'Native Instruments', category: 'Pianos & Keys', size: '3.9 GB', instruments: 2, isFavorite: true },
-    { id: '2', name: 'Session Strings Pro 2', vendor: 'Native Instruments', category: 'Strings', size: '32.1 GB', instruments: 24, isFavorite: false },
-    { id: '3', name: 'Action Strikes', vendor: 'Native Instruments', category: 'Drums & Percussion', size: '3.2 GB', instruments: 12, isFavorite: true },
-    { id: '4', name: 'Damage 2', vendor: 'Heavyocity', category: 'Drums & Percussion', size: '60.5 GB', instruments: 48, isFavorite: true },
-    { id: '5', name: 'Exhale', vendor: 'Output', category: 'Choir & Vocals', size: '9.2 GB', instruments: 500, isFavorite: false },
-    { id: '6', name: 'Straylight', vendor: 'Native Instruments', category: 'Sound Design', size: '2.4 GB', instruments: 380, isFavorite: false },
-    { id: '7', name: 'Pharlight', vendor: 'Native Instruments', category: 'Sound Design', size: '1.2 GB', instruments: 350, isFavorite: false },
+  const mockLibraries: SampleLibrary[] = [
+    { id: '1', name: 'The Giant', vendor: 'TBM Instruments', category: 'Pianos & Keys', size: '3.9 GB', instruments: 2, isFavorite: true },
+    { id: '2', name: 'Session Strings Pro 2', vendor: 'TBM Instruments', category: 'Strings', size: '32.1 GB', instruments: 24, isFavorite: false },
+    { id: '3', name: 'Action Strikes', vendor: 'TBM Instruments', category: 'Drums & Percussion', size: '3.2 GB', instruments: 12, isFavorite: true },
+    { id: '4', name: 'Damage 2', vendor: 'TBM Instruments', category: 'Drums & Percussion', size: '60.5 GB', instruments: 48, isFavorite: true },
+    { id: '5', name: 'Exhale', vendor: 'TBM Instruments', category: 'Choir & Vocals', size: '9.2 GB', instruments: 500, isFavorite: false },
+    { id: '6', name: 'Straylight', vendor: 'TBM Instruments', category: 'Sound Design', size: '2.4 GB', instruments: 380, isFavorite: false },
+    { id: '7', name: 'Pharlight', vendor: 'TBM Instruments', category: 'Sound Design', size: '1.2 GB', instruments: 350, isFavorite: false },
   ];
 
   const handleScan = () => {
@@ -80,8 +80,8 @@ export function KontaktBrowser() {
             <Library className="text-brand" size={20} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-neutral-200 uppercase tracking-widest">Kontakt Library Manager</h2>
-            <p className="text-[10px] text-neutral-500 font-mono uppercase">Engine: Kontakt Compatible v7.0.0</p>
+            <h2 className="text-sm font-bold text-neutral-200 uppercase tracking-widest">Sample Library Manager</h2>
+            <p className="text-[10px] text-neutral-500 font-mono uppercase">Engine: TBM Sample Engine v7.0.0</p>
           </div>
         </div>
 
@@ -135,7 +135,7 @@ export function KontaktBrowser() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 text-[10px] text-neutral-400 bg-neutral-950 p-2 rounded border border-neutral-800">
                 <HardDrive size={12} className="text-neutral-600" />
-                <span className="truncate">D:/Kontakt Libraries</span>
+                <span className="truncate">D:/Sample Libraries</span>
               </div>
               <div className="flex items-center gap-2 text-[10px] text-neutral-400 bg-neutral-950 p-2 rounded border border-neutral-800">
                 <HardDrive size={12} className="text-neutral-600" />
