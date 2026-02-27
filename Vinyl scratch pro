@@ -1,0 +1,845 @@
+{
+  "VinylScratchPro": {
+    "meta": {
+      "name": "VinylScratchPro",
+      "version": "2.0.0",
+      "type": "beatmaker_plugin_module",
+      "description": "Fully implementable vinyl scratch system. Inspired by DJ Premier and Pete Rock. Covers beginner drag-and-drop through pro controller live performance.",
+      "apiNamespace": "VSP"
+    },
+
+    "audioEngine": {
+      "description": "Real-time audio processing pipeline. Integrate into your existing audio graph as an insert node.",
+      "processingChain": [
+        "inputBuffer",
+        "playheadController",
+        "pitchShifter",
+        "timeStretcher",
+        "faderGate",
+        "effectsRack",
+        "outputBuffer"
+      ],
+      "sampleRates": [44100, 48000, 96000],
+      "bitDepth": [16, 24, 32],
+      "bufferSize": {
+        "default": 256,
+        "options": [64, 128, 256, 512],
+        "note": "64–128 recommended for live scratch; 256 for auto-scratch rendering"
+      },
+      "vinylSimulation": {
+        "inertia": {
+          "description": "How much the 'platter' resists sudden speed changes, simulating real vinyl mass.",
+          "model": "exponential_decay",
+          "params": {
+            "massCoefficient": { "type": "float", "default": 0.72, "min": 0.0, "max": 1.0, "note": "Higher = heavier platter feel" },
+            "accelerationCurve": "ease_in_out_cubic",
+            "decelerationCurve": "ease_out_expo"
+          }
+        },
+        "friction": {
+          "description": "Playhead deceleration when hand is removed from vinyl.",
+          "params": {
+            "frictionCoefficient": { "type": "float", "default": 0.85, "min": 0.1, "max": 1.0 },
+            "stopThresholdMs": { "type": "int", "default": 80, "note": "ms before playhead is considered stopped" }
+          }
+        },
+        "pitchDrift": {
+          "enabled": true,
+          "description": "Subtle pitch warble on slow speeds mimicking worn vinyl.",
+          "amount": { "type": "float", "default": 0.003, "min": 0.0, "max": 0.02 },
+          "lfoRate": { "type": "float", "default": 0.7, "unit": "Hz" }
+        },
+        "vinylNoise": {
+          "enabled": true,
+          "description": "Optional surface noise layer, mixed under scratch audio.",
+          "noiseLevel": { "type": "float", "default": -52.0, "unit": "dBFS", "min": -80.0, "max": -30.0 },
+          "crackleRate": { "type": "float", "default": 0.04, "note": "Crackle events per second" }
+        }
+      },
+      "playheadController": {
+        "description": "Core scratch position/speed state machine.",
+        "state": {
+          "fields": {
+            "position": { "type": "float", "unit": "samples", "description": "Current read position in sample buffer" },
+            "velocity": { "type": "float", "unit": "samples_per_frame", "description": "Positive = forward, negative = reverse" },
+            "targetVelocity": { "type": "float", "description": "Velocity being ramped toward (inertia)" },
+            "direction": { "type": "enum", "values": ["forward", "reverse", "stopped"] },
+            "isHeld": { "type": "bool", "description": "Whether controller/mouse is actively driving playhead" },
+            "loopRegion": {
+              "type": "object",
+              "fields": {
+                "start": { "type": "float", "unit": "samples" },
+                "end": { "type": "float", "unit": "samples" },
+                "active": { "type": "bool" }
+              }
+            }
+          }
+        },
+        "updateLoop": {
+          "description": "Called every audio frame. Pseudocode only — implement in your engine's audio thread.",
+          "pseudocode": [
+            "if isHeld: velocity = lerp(velocity, targetVelocity, 1.0 - massCoefficient)",
+            "else: velocity = velocity * frictionCoefficient",
+            "if abs(velocity) < stopThreshold: velocity = 0; direction = stopped",
+            "position += velocity",
+            "if loopRegion.active and position >= loopRegion.end: position = loopRegion.start",
+            "if position < 0: position = 0 (or bounce based on mode)",
+            "outputSample = interpolateSample(buffer, position)"
+          ],
+          "interpolation": {
+            "algorithm": "hermite_4point",
+            "note": "Use at minimum linear; hermite recommended for quality pitch shifts"
+          }
+        }
+      },
+      "pitchShifter": {
+        "algorithm": "phase_vocoder",
+        "semitoneRange": { "min": -12, "max": 12 },
+        "centsRange": { "min": -1200, "max": 1200 },
+        "windowSize": 2048,
+        "overlap": 4,
+        "note": "Pitch shift is driven by playhead velocity ratio vs. original speed. Manual override also exposed."
+      },
+      "timeStretcher": {
+        "algorithm": "elastique_or_rubberband_compatible",
+        "ratioRange": { "min": 0.25, "max": 4.0 },
+        "transientPreservation": true,
+        "formantLock": true
+      },
+      "faderGate": {
+        "description": "Crossfader / upfader amplitude gate. Controls the classic DJ cut.",
+        "params": {
+          "faderPosition": { "type": "float", "min": 0.0, "max": 1.0, "default": 1.0 },
+          "curve": {
+            "type": "enum",
+            "values": ["linear", "exponential", "s_curve", "hard_cut"],
+            "default": "exponential",
+            "note": "hard_cut = instant on/off for transformer style"
+          },
+          "attackMs": { "type": "float", "default": 2.0, "min": 0.0, "max": 50.0 },
+          "releaseMs": { "type": "float", "default": 4.0, "min": 0.0, "max": 100.0 },
+          "automate": true
+        }
+      },
+      "effectsRack": {
+        "slots": 4,
+        "availableEffects": {
+          "echo": {
+            "params": {
+              "delayMs": { "type": "float", "default": 125.0, "min": 10.0, "max": 1000.0, "syncToBPM": true },
+              "feedback": { "type": "float", "default": 0.35, "min": 0.0, "max": 0.95 },
+              "wetDry": { "type": "float", "default": 0.3 }
+            }
+          },
+          "reverb": {
+            "params": {
+              "roomSize": { "type": "float", "default": 0.3, "min": 0.0, "max": 1.0 },
+              "damping": { "type": "float", "default": 0.5 },
+              "wetDry": { "type": "float", "default": 0.15 }
+            }
+          },
+          "light_distortion": {
+            "params": {
+              "drive": { "type": "float", "default": 1.4, "min": 1.0, "max": 6.0 },
+              "tone": { "type": "float", "default": 0.6 },
+              "wetDry": { "type": "float", "default": 0.25 }
+            }
+          },
+          "auto_wah": {
+            "params": {
+              "sensitivity": { "type": "float", "default": 0.7, "min": 0.0, "max": 1.0 },
+              "attackMs": { "type": "float", "default": 10.0 },
+              "releaseMs": { "type": "float", "default": 200.0 },
+              "freqRangeHz": { "type": "array", "value": [400, 3000] },
+              "wetDry": { "type": "float", "default": 0.4 }
+            }
+          },
+          "bitcrusher": {
+            "params": {
+              "bits": { "type": "int", "default": 12, "min": 4, "max": 16 },
+              "sampleRateReduction": { "type": "float", "default": 1.0, "min": 0.1, "max": 1.0 }
+            }
+          },
+          "flanger": {
+            "params": {
+              "rateHz": { "type": "float", "default": 0.4 },
+              "depth": { "type": "float", "default": 0.5 },
+              "feedback": { "type": "float", "default": 0.4 }
+            }
+          }
+        }
+      }
+    },
+
+    "soundLibrary": {
+      "schema": {
+        "sample": {
+          "id": { "type": "string", "format": "snake_case" },
+          "name": { "type": "string" },
+          "category": { "type": "enum", "values": ["vocal", "scratch", "fx", "user"] },
+          "tags": { "type": "array", "items": "string" },
+          "filePath": { "type": "string", "note": "Relative to samples/ directory" },
+          "waveformData": { "type": "array", "note": "Pre-computed RMS peaks for waveform display, 1 value per 256 samples" },
+          "defaultLoopRegion": {
+            "startMs": { "type": "float" },
+            "endMs": { "type": "float" }
+          },
+          "detectedTransients": { "type": "array", "items": "float", "unit": "ms" },
+          "sampleRate": { "type": "int" },
+          "durationMs": { "type": "float" },
+          "bitDepth": { "type": "int" }
+        }
+      },
+      "builtInSamples": [
+        {
+          "id": "ah_yeah1",
+          "name": "Ah Yeah!",
+          "category": "vocal",
+          "tags": ["premier", "classic", "iconic"],
+          "filePath": "samples/vocals/ah_yeah1.wav",
+          "defaultLoopRegion": { "startMs": 0, "endMs": 320 }
+        },
+        {
+          "id": "ah_yeah2",
+          "name": "Ah Yeah (long)",
+          "category": "vocal",
+          "tags": ["premier"],
+          "filePath": "samples/vocals/ah_yeah2.wav",
+          "defaultLoopRegion": { "startMs": 0, "endMs": 600 }
+        },
+        {
+          "id": "fresh",
+          "name": "Fresh",
+          "category": "vocal",
+          "tags": ["premier"],
+          "filePath": "samples/vocals/fresh.wav",
+          "defaultLoopRegion": { "startMs": 0, "endMs": 280 }
+        },
+        {
+          "id": "yeah_boy",
+          "name": "Yeah Boy",
+          "category": "vocal",
+          "tags": ["classic"],
+          "filePath": "samples/vocals/yeah_boy.wav",
+          "defaultLoopRegion": { "startMs": 0, "endMs": 400 }
+        },
+        {
+          "id": "one_two",
+          "name": "One Two",
+          "category": "vocal",
+          "tags": ["classic"],
+          "filePath": "samples/vocals/one_two.wav",
+          "defaultLoopRegion": { "startMs": 0, "endMs": 500 }
+        },
+        {
+          "id": "what",
+          "name": "What?!",
+          "category": "vocal",
+          "tags": ["classic"],
+          "filePath": "samples/vocals/what.wav",
+          "defaultLoopRegion": { "startMs": 0, "endMs": 280 }
+        },
+        {
+          "id": "baby_base",
+          "name": "Baby Scratch Base",
+          "category": "scratch",
+          "tags": ["fundamental", "training"],
+          "filePath": "samples/scratch/baby_base.wav",
+          "defaultLoopRegion": { "startMs": 0, "endMs": 800 }
+        }
+      ],
+      "importConfig": {
+        "method": "drag_and_drop_or_file_dialog",
+        "acceptedFormats": ["wav", "aif", "aiff", "mp3", "ogg", "flac"],
+        "onImport": [
+          "decode_to_pcm",
+          "resample_to_engine_sampleRate_if_needed",
+          "compute_waveform_peaks",
+          "run_transient_detection",
+          "auto_trim_silence_at_boundaries",
+          "assign_uuid",
+          "add_to_user_category"
+        ]
+      }
+    },
+
+    "scratchStyles": {
+      "schema": {
+        "preset": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "difficulty": { "type": "enum", "values": ["beginner", "intermediate", "advanced"] },
+          "pattern": {
+            "description": "Array of scratch events that define one full repetition of the style.",
+            "type": "array",
+            "items": { "$ref": "#/scratchEvent" }
+          },
+          "params": {
+            "faderUse": { "type": "bool" },
+            "bpmDivision": { "type": "string", "note": "e.g. '8n', '16n', '32n' — pattern grid resolution" },
+            "swing": { "type": "float", "min": 0, "max": 100, "unit": "percent", "default": 0 },
+            "intensity": { "type": "enum", "values": ["low", "medium", "medium_high", "high"] },
+            "musical": { "type": "bool", "default": false },
+            "hookFocus": { "type": "bool", "default": false }
+          }
+        }
+      },
+      "presets": [
+        {
+          "id": "baby",
+          "name": "Baby Scratch",
+          "difficulty": "beginner",
+          "description": "Classic simple back-and-forth. No fader — just the hand on the record.",
+          "params": {
+            "faderUse": false,
+            "bpmDivision": "8n",
+            "swing": 0,
+            "intensity": "medium",
+            "musical": false
+          },
+          "pattern": [
+            { "type": "forward", "startBeat": 0.0, "durationBeats": 0.5, "speedMultiplier": 1.0, "faderPosition": 1.0 },
+            { "type": "backward", "startBeat": 0.5, "durationBeats": 0.5, "speedMultiplier": 1.0, "faderPosition": 1.0 }
+          ]
+        },
+        {
+          "id": "chirp",
+          "name": "Chirp Scratch",
+          "difficulty": "intermediate",
+          "description": "Fast forward motion, fader opens briefly at peak then cuts. Premier favorite.",
+          "params": {
+            "faderUse": true,
+            "bpmDivision": "16n",
+            "swing": 0,
+            "intensity": "high",
+            "musical": false
+          },
+          "pattern": [
+            { "type": "forward", "startBeat": 0.0, "durationBeats": 0.5, "speedMultiplier": 1.8, "faderPosition": 0.0 },
+            { "type": "fader_open", "startBeat": 0.15, "durationBeats": 0.2, "faderPosition": 1.0 },
+            { "type": "fader_close", "startBeat": 0.35, "durationBeats": 0.0 },
+            { "type": "backward", "startBeat": 0.5, "durationBeats": 0.5, "speedMultiplier": 1.0, "faderPosition": 0.0 }
+          ]
+        },
+        {
+          "id": "transformer",
+          "name": "Transformer",
+          "difficulty": "intermediate",
+          "description": "Steady forward motion; fader stutters on/off at 16th or 32nd rate.",
+          "params": {
+            "faderUse": true,
+            "bpmDivision": "16n",
+            "swing": 0,
+            "intensity": "high",
+            "musical": false,
+            "stutterRate": "16n",
+            "stutterDutyPercent": 50
+          },
+          "pattern": [
+            { "type": "forward", "startBeat": 0.0, "durationBeats": 1.0, "speedMultiplier": 1.0, "faderPosition": 1.0, "stutterOverride": { "enabled": true, "rate": "16n", "dutyPercent": 50 } },
+            { "type": "backward", "startBeat": 1.0, "durationBeats": 1.0, "speedMultiplier": 1.0, "faderPosition": 0.0 }
+          ]
+        },
+        {
+          "id": "tear",
+          "name": "Tear Scratch",
+          "difficulty": "intermediate",
+          "description": "Rip forward aggressively, quickly tear back with fader open.",
+          "params": {
+            "faderUse": true,
+            "bpmDivision": "16n",
+            "intensity": "high"
+          },
+          "pattern": [
+            { "type": "forward", "startBeat": 0.0, "durationBeats": 0.25, "speedMultiplier": 2.5, "faderPosition": 1.0 },
+            { "type": "fader_close", "startBeat": 0.25, "durationBeats": 0.0 },
+            { "type": "backward", "startBeat": 0.25, "durationBeats": 0.15, "speedMultiplier": 3.0, "faderPosition": 0.0 },
+            { "type": "fader_open", "startBeat": 0.4, "durationBeats": 0.0 },
+            { "type": "forward", "startBeat": 0.4, "durationBeats": 0.35, "speedMultiplier": 1.8, "faderPosition": 1.0 },
+            { "type": "fader_close", "startBeat": 0.75, "durationBeats": 0.0 },
+            { "type": "backward", "startBeat": 0.75, "durationBeats": 0.25, "speedMultiplier": 1.5, "faderPosition": 0.0 }
+          ]
+        },
+        {
+          "id": "flare",
+          "name": "Flare Scratch",
+          "difficulty": "advanced",
+          "description": "Forward motion with fader starting open and cutting twice during the motion.",
+          "params": {
+            "faderUse": true,
+            "bpmDivision": "16n",
+            "cutsPerMotion": 2,
+            "intensity": "high"
+          },
+          "pattern": [
+            { "type": "forward", "startBeat": 0.0, "durationBeats": 1.0, "speedMultiplier": 1.2, "faderPosition": 1.0 },
+            { "type": "fader_close", "startBeat": 0.33, "durationBeats": 0.04 },
+            { "type": "fader_close", "startBeat": 0.66, "durationBeats": 0.04 },
+            { "type": "backward", "startBeat": 1.0, "durationBeats": 0.5, "speedMultiplier": 1.0, "faderPosition": 0.0 }
+          ]
+        },
+        {
+          "id": "crab",
+          "name": "Crab Scratch",
+          "difficulty": "advanced",
+          "description": "Multi-finger rapid stutter: thumb holds fader, 3 fingers individually tap for ultra-fast stutters.",
+          "params": {
+            "faderUse": true,
+            "bpmDivision": "32n",
+            "stutterRate": "32n",
+            "fingers": 3,
+            "intensity": "high"
+          },
+          "pattern": [
+            { "type": "forward", "startBeat": 0.0, "durationBeats": 1.0, "speedMultiplier": 1.0, "faderPosition": 1.0, "stutterOverride": { "enabled": true, "rate": "32n", "dutyPercent": 40 } },
+            { "type": "backward", "startBeat": 1.0, "durationBeats": 0.5, "speedMultiplier": 1.0, "faderPosition": 0.0 }
+          ]
+        },
+        {
+          "id": "premierHook",
+          "name": "DJ Premier Style Hook",
+          "difficulty": "intermediate",
+          "description": "Musical, rhythmic chopped stabs and chirps targeting vocal hook peaks. Tight, punchy.",
+          "params": {
+            "faderUse": true,
+            "bpmDivision": "16n",
+            "swing": 8,
+            "intensity": "medium_high",
+            "musical": true,
+            "hookFocus": true,
+            "targetTransients": true
+          },
+          "pattern": [
+            { "type": "forward", "startBeat": 0.0, "durationBeats": 0.25, "speedMultiplier": 1.5, "faderPosition": 1.0 },
+            { "type": "fader_close", "startBeat": 0.25, "durationBeats": 0.0 },
+            { "type": "backward", "startBeat": 0.25, "durationBeats": 0.25, "speedMultiplier": 1.0, "faderPosition": 0.0 },
+            { "type": "chirp", "startBeat": 0.5, "durationBeats": 0.5, "speedMultiplier": 2.0, "faderPosition": 1.0 },
+            { "type": "fader_close", "startBeat": 1.0, "durationBeats": 0.0 },
+            { "type": "backward", "startBeat": 1.0, "durationBeats": 0.5, "speedMultiplier": 1.0, "faderPosition": 0.0 },
+            { "type": "forward", "startBeat": 1.5, "durationBeats": 0.25, "speedMultiplier": 1.8, "faderPosition": 1.0 },
+            { "type": "fader_close", "startBeat": 1.75, "durationBeats": 0.0 },
+            { "type": "backward", "startBeat": 1.75, "durationBeats": 0.25, "speedMultiplier": 1.0, "faderPosition": 0.0 }
+          ]
+        },
+        {
+          "id": "peteSoul",
+          "name": "Pete Rock Soul Scratch",
+          "difficulty": "intermediate",
+          "description": "Laid-back, funky, groovy vocal stabs. Loose timing, heavy swing, feel over precision.",
+          "params": {
+            "faderUse": true,
+            "bpmDivision": "8n",
+            "swing": 15,
+            "intensity": "medium",
+            "musical": true,
+            "hookFocus": true
+          },
+          "pattern": [
+            { "type": "forward", "startBeat": 0.0, "durationBeats": 0.6, "speedMultiplier": 0.85, "faderPosition": 0.9 },
+            { "type": "fader_close", "startBeat": 0.6, "durationBeats": 0.0 },
+            { "type": "backward", "startBeat": 0.6, "durationBeats": 0.4, "speedMultiplier": 0.9, "faderPosition": 0.0 },
+            { "type": "forward", "startBeat": 1.0, "durationBeats": 0.5, "speedMultiplier": 1.0, "faderPosition": 0.85, "velocityRamp": "ease_in" },
+            { "type": "fader_close", "startBeat": 1.5, "durationBeats": 0.0 },
+            { "type": "backward", "startBeat": 1.5, "durationBeats": 0.5, "speedMultiplier": 0.8, "faderPosition": 0.0 }
+          ]
+        }
+      ],
+      "randomizeConfig": {
+        "enabled": true,
+        "method": "weighted_random",
+        "weights": {
+          "baby": 0.15,
+          "chirp": 0.2,
+          "transformer": 0.1,
+          "tear": 0.15,
+          "flare": 0.1,
+          "crab": 0.05,
+          "premierHook": 0.15,
+          "peteSoul": 0.1
+        },
+        "note": "Adjust weights to bias toward styles that match user skill/context"
+      }
+    },
+
+    "scratchEvent": {
+      "description": "Atomic scratch action. Used in preset patterns and custom editor.",
+      "schema": {
+        "id": { "type": "string", "format": "uuid" },
+        "type": {
+          "type": "enum",
+          "values": ["forward", "backward", "fader_open", "fader_close", "hold", "chirp", "tear", "stutter", "one_shot"]
+        },
+        "startBeat": { "type": "float", "unit": "beats_from_pattern_start", "description": "Beat-relative start time within the pattern" },
+        "startMs": { "type": "float", "unit": "ms", "description": "Absolute ms time — populated at render time from BPM" },
+        "durationBeats": { "type": "float", "unit": "beats" },
+        "durationMs": { "type": "float", "unit": "ms" },
+        "speedMultiplier": { "type": "float", "min": -4.0, "max": 4.0, "note": "Negative = reverse. 1.0 = original speed." },
+        "velocityRamp": { "type": "enum", "values": ["linear", "ease_in", "ease_out", "ease_in_out", "instant"], "default": "linear" },
+        "faderPosition": { "type": "float", "min": 0.0, "max": 1.0 },
+        "sampleSegment": {
+          "startMs": { "type": "float", "description": "Overrides playhead start position in sample" },
+          "endMs": { "type": "float", "description": "Clamps playhead end position" }
+        },
+        "stutterOverride": {
+          "enabled": { "type": "bool", "default": false },
+          "rate": { "type": "enum", "values": ["8n", "16n", "32n", "64n"] },
+          "dutyPercent": { "type": "float", "min": 0, "max": 100, "description": "On-time percentage per stutter cycle" }
+        },
+        "pitchOffsetSemitones": { "type": "float", "min": -12, "max": 12, "default": 0 },
+        "gain": { "type": "float", "min": 0.0, "max": 2.0, "default": 1.0 },
+        "effects": {
+          "type": "array",
+          "items": {
+            "effectId": { "type": "string", "ref": "audioEngine.effectsRack.availableEffects" },
+            "paramOverrides": { "type": "object", "note": "Key-value override of effect params for this event only" }
+          }
+        }
+      }
+    },
+
+    "bpmSync": {
+      "description": "BPM/tempo sync utilities. Integrate with your host BPM clock.",
+      "hostClockInput": {
+        "fields": {
+          "bpm": { "type": "float", "default": 90.0, "min": 40.0, "max": 300.0 },
+          "timeSignatureNumerator": { "type": "int", "default": 4 },
+          "timeSignatureDenominator": { "type": "int", "default": 4 },
+          "currentBeat": { "type": "float", "description": "Host transport beat position" },
+          "isPlaying": { "type": "bool" }
+        }
+      },
+      "calculations": {
+        "beatToMs": "ms = (60000 / bpm) * beats",
+        "divisionToMs": {
+          "1n": "60000 / bpm * 4",
+          "2n": "60000 / bpm * 2",
+          "4n": "60000 / bpm",
+          "8n": "60000 / bpm / 2",
+          "16n": "60000 / bpm / 4",
+          "32n": "60000 / bpm / 8",
+          "64n": "60000 / bpm / 16"
+        },
+        "swingOffset": "swingOffsetMs = (swing / 100) * (divisionMs / 2)"
+      },
+      "quantization": {
+        "grid": { "type": "enum", "values": ["4n", "8n", "16n", "32n", "free"], "default": "16n" },
+        "quantizeStrength": { "type": "float", "min": 0.0, "max": 1.0, "default": 1.0, "note": "1.0 = hard quantize; 0.0 = free" },
+        "snap": "enabled_during_auto_scratch_disabled_during_live"
+      }
+    },
+
+    "autoScratch": {
+      "description": "One-click scratched hook generator.",
+      "inputSchema": {
+        "sampleId": { "type": "string", "description": "ID of sample from soundLibrary" },
+        "styleId": { "type": "string", "description": "Preset ID or 'random'" },
+        "intensity": { "type": "enum", "values": ["low", "medium", "high"] },
+        "length": { "type": "enum", "values": ["short_stab", "1_bar", "2_bars", "4_bars", "full_hook"] },
+        "addSignatureFX": { "type": "bool", "default": true },
+        "autoQuantize": { "type": "bool", "default": true },
+        "targetTransients": { "type": "bool", "default": true, "description": "Aligns scratch stabs to detected transients in sample" },
+        "timelineInsertPosition": { "type": "float", "unit": "beats", "description": "Where to place output clip on host timeline" }
+      },
+      "pipeline": {
+        "steps": [
+          {
+            "step": 1,
+            "name": "loadSample",
+            "action": "Decode and buffer the target sample. Extract waveform + transient data."
+          },
+          {
+            "step": 2,
+            "name": "detectVocalSegments",
+            "action": "Run onset/transient detection. Build array of { timeMs, amplitude, isPeak }.",
+            "algorithm": "energy_threshold_with_spectral_flux",
+            "params": {
+              "energyThreshold": 0.15,
+              "fluxSensitivity": 0.4,
+              "minSegmentMs": 50,
+              "maxSegments": 32
+            }
+          },
+          {
+            "step": 3,
+            "name": "selectPreset",
+            "action": "Load style pattern from scratchStyles.presets by styleId. If 'random', pick via randomizeConfig weights."
+          },
+          {
+            "step": 4,
+            "name": "scaleToLength",
+            "action": "Expand or compress pattern repetitions to match requested 'length'. Use BPM to calculate total bars in ms."
+          },
+          {
+            "step": 5,
+            "name": "applyIntensityScaling",
+            "action": "Adjust speedMultiplier, faderPosition, gain across all events based on intensity level.",
+            "intensityMap": {
+              "low": { "speedScale": 0.7, "faderGain": 0.75, "gainScale": 0.8 },
+              "medium": { "speedScale": 1.0, "faderGain": 1.0, "gainScale": 1.0 },
+              "high": { "speedScale": 1.35, "faderGain": 1.0, "gainScale": 1.15 }
+            }
+          },
+          {
+            "step": 6,
+            "name": "alignToTransients",
+            "action": "If targetTransients=true, shift each forward/chirp event start to nearest detected transient. Maintain rhythmic shape.",
+            "maxShiftMs": 40
+          },
+          {
+            "step": 7,
+            "name": "applySwingQuantize",
+            "action": "Convert all startBeat/durationBeat values to absolute ms using BPM + swing offset."
+          },
+          {
+            "step": 8,
+            "name": "applySignatureFX",
+            "action": "If addSignatureFX=true, attach echo + auto_wah to forward events with default params from effectsRack.",
+            "note": "FX are per-event, not global, during auto-scratch."
+          },
+          {
+            "step": 9,
+            "name": "renderAudioClip",
+            "action": "Drive playheadController through the event timeline. Process through full audioEngine chain. Write to output PCM buffer.",
+            "outputFormat": { "format": "wav", "bitDepth": 24, "normalize": true }
+          },
+          {
+            "step": 10,
+            "name": "packageClip",
+            "action": "Wrap rendered buffer as a timeline clip object.",
+            "outputSchema": {
+              "clipId": { "type": "string" },
+              "name": { "type": "string", "format": "'${sampleName} [${styleName}]'" },
+              "startBeat": { "type": "float" },
+              "durationBars": { "type": "float" },
+              "audioBuffer": { "type": "PCMBuffer" },
+              "automationLanes": {
+                "speed": "float[] keyed by ms",
+                "fader": "float[] keyed by ms",
+                "pitch": "float[] keyed by ms"
+              },
+              "sourcePresetId": { "type": "string" },
+              "sourceSampleId": { "type": "string" }
+            }
+          }
+        ]
+      }
+    },
+
+    "customScratchEditor": {
+      "description": "Step-sequencer + live-record editor for building custom scratch patterns.",
+      "editorState": {
+        "fields": {
+          "patternName": { "type": "string" },
+          "gridResolution": { "type": "enum", "values": ["8n", "16n", "32n"], "default": "16n" },
+          "patternLengthBars": { "type": "int", "default": 2, "min": 1, "max": 8 },
+          "events": { "type": "array", "items": { "$ref": "#/scratchEvent" } },
+          "previewPlaying": { "type": "bool" },
+          "recordingActive": { "type": "bool" },
+          "loadedTemplate": { "type": "string", "note": "ID of preset loaded as starting template" }
+        }
+      },
+      "commands": {
+        "loadTemplate": {
+          "input": { "presetId": "string" },
+          "action": "Deep-copy preset pattern events into editor.events. Set loadedTemplate."
+        },
+        "addEvent": {
+          "input": { "event": { "$ref": "#/scratchEvent" } },
+          "action": "Insert event into events array, sorted by startBeat."
+        },
+        "updateEvent": {
+          "input": { "eventId": "string", "changes": "Partial<ScratchEvent>" },
+          "action": "Merge changes into matching event by id."
+        },
+        "deleteEvent": {
+          "input": { "eventId": "string" },
+          "action": "Remove event from array."
+        },
+        "startPreview": {
+          "action": "Send current events to audioEngine, sync to host BPM, begin looped playback."
+        },
+        "stopPreview": {
+          "action": "Stop preview playback, reset playhead."
+        },
+        "startRecording": {
+          "description": "Capture live controller/mouse input as scratch events in real time.",
+          "action": "Enable interactionModes.controllerBased or mouseKeyboardFallback. Begin capturing all playhead + fader input as time-stamped events.",
+          "onStop": "quantize captured events to gridResolution (if autoQuantize=true), append to editor.events"
+        },
+        "saveAsPreset": {
+          "input": { "name": "string", "tags": "string[]" },
+          "action": "Package current events as a new preset, add to scratchStyles.presets with id = uuid()."
+        },
+        "exportAudioClip": {
+          "action": "Run autoScratch.pipeline steps 8-10 against current events."
+        },
+        "exportMIDI": {
+          "description": "Export fader and speed automation as MIDI CC data for use in external DAW.",
+          "mapping": {
+            "faderPosition": "CC11 (Expression)",
+            "speedMultiplier": "CC1 (Mod Wheel, scaled 0–127)"
+          },
+          "format": "Standard MIDI File (.mid), resolution 480 PPQ"
+        }
+      }
+    },
+
+    "interactionModes": {
+      "dragAndDrop": {
+        "enabled": true,
+        "eventHandlers": {
+          "onSampleDroppedToScratchPad": {
+            "action": "Load sample into audioEngine buffer. Auto-preview with currently selected style.",
+            "visualFeedback": ["animate_waveform_scratch_lines", "spin_vinyl_platter_overlay"]
+          },
+          "onSampleDroppedToTimeline": {
+            "action": "Trigger autoScratch pipeline with default params. Place output clip at drop position.",
+            "defaultStyle": "premierHook",
+            "defaultIntensity": "medium"
+          },
+          "onPresetDroppedOnExistingClip": {
+            "action": "Re-run autoScratch pipeline on clip's source sample with new style. Replace clip audio and automation."
+          }
+        }
+      },
+      "controllerBased": {
+        "enabled": true,
+        "midiLearn": {
+          "enabled": true,
+          "onEnableMidiLearn": "Enter learn mode: next received CC/note maps to selected parameter.",
+          "mappingStore": "persistent JSON per user config file"
+        },
+        "defaultMappings": {
+          "jogWheel": {
+            "midiType": "CC",
+            "cc": 33,
+            "resolution": "high_res_14bit_optional",
+            "description": "Drives playheadController.targetVelocity. Delta mode preferred.",
+            "deltaScale": 0.012,
+            "note": "CC value 64 = center/stopped. <64 = reverse, >64 = forward."
+          },
+          "crossfader": {
+            "midiType": "CC",
+            "cc": 8,
+            "range": [0, 127],
+            "description": "Maps to faderGate.faderPosition (0.0–1.0)"
+          },
+          "triggerPad_ahYeah": {
+            "midiType": "note",
+            "note": 36,
+            "action": "one_shot_play",
+            "sampleId": "ah_yeah1"
+          },
+          "triggerPad_switchPreset": {
+            "midiType": "note",
+            "note": 37,
+            "action": "cycle_preset_forward"
+          },
+          "triggerPad_oneShotStab": {
+            "midiType": "note",
+            "note": 38,
+            "action": "one_shot_stab",
+            "description": "Single forward stab at current playhead position, fader open"
+          },
+          "button_recordCustom": {
+            "midiType": "note",
+            "note": 39,
+            "action": "toggle_recording",
+            "description": "Toggle customScratchEditor live recording on/off"
+          },
+          "button_applyAuto": {
+            "midiType": "note",
+            "note": 40,
+            "action": "trigger_autoScratch_with_current_settings"
+          },
+          "button_cueReset": {
+            "midiType": "note",
+            "note": 41,
+            "action": "reset_playhead_to_loopRegion_start"
+          }
+        },
+        "physics": {
+          "description": "Jog wheel physics model.",
+          "accelerationSensitivity": 1.4,
+          "velocitySmoothing": 0.6,
+          "maxVelocityMultiplier": 4.0,
+          "stopOnZeroDelta": true,
+          "stopDelayMs": 80
+        }
+      },
+      "mouseKeyboardFallback": {
+        "waveformDrag": {
+          "description": "Click and drag on waveform display to manually scratch.",
+          "horizontal": "Maps drag x-delta to playhead velocity",
+          "sensitivity": 0.008,
+          "faderBehavior": "auto_open_on_drag_start_close_on_release"
+        },
+        "hotkeys": {
+          "space": "play_pause_host_transport",
+          "left": "set_velocity_negative_1x",
+          "right": "set_velocity_positive_1x",
+          "shift_left": "set_velocity_negative_2x",
+          "shift_right": "set_velocity_positive_2x",
+          "up": "increment_speed_by_0.25x",
+          "down": "decrement_speed_by_0.25x",
+          "r": "toggle_reverse",
+          "f": "fader_open_while_held",
+          "1_8": "load_preset_by_index"
+        }
+      }
+    },
+
+    "integration": {
+      "timelineClip": {
+        "description": "A rendered scratch clip placed on the beatmaker timeline.",
+        "schema": {
+          "clipId": "string",
+          "name": "string",
+          "trackId": "string",
+          "startBeat": "float",
+          "durationBars": "float",
+          "audioBuffer": "PCMBuffer",
+          "automationLanes": {
+            "speed": "AutomationLane<float>",
+            "fader": "AutomationLane<float>",
+            "pitch": "AutomationLane<float>",
+            "effectWetDry": "AutomationLane<float>"
+          },
+          "sourcePresetId": "string",
+          "sourceSampleId": "string",
+          "isEditable": true
+        }
+      },
+      "exportOptions": {
+        "renderedWAV": { "bitDepth": 24, "normalize": true, "trimSilence": true },
+        "renderedOGG": { "quality": 8 },
+        "editableClip": "Internal format — preserves automation lanes and source references",
+        "MIDIClip": "Standard MIDI file with CC11/CC1 automation"
+      },
+      "performance": {
+        "targetLatencyMs": 6,
+        "cpuTargetPercent": 5,
+        "offloadRendering": "autoScratch render runs off audio thread in worker/background thread",
+        "liveProcessing": "playheadController + faderGate run on audio thread only"
+      }
+    },
+
+    "stateModel": {
+      "description": "Top-level module state. Your system should own and persist this.",
+      "fields": {
+        "activeSampleId": { "type": "string" },
+        "activeStyleId": { "type": "string", "default": "premierHook" },
+        "activeMode": { "type": "enum", "values": ["auto", "live", "editor"], "default": "auto" },
+        "bpm": { "type": "float", "default": 90.0 },
+        "playheadState": { "$ref": "#/audioEngine.playheadController.state" },
+        "faderState": { "faderPosition": "float", "curve": "string" },
+        "effectsState": { "type": "array", "items": { "effectId": "string", "params": "object", "enabled": "bool" } },
+        "customPresets": { "type": "array", "items": { "$ref": "#/scratchStyles.schema.preset" } },
+        "editorState": { "$ref": "#/customScratchEditor.editorState" },
+        "midiMappings": { "type": "object", "note": "User-defined MIDI CC/note to parameter mappings" }
+      }
+    }
+  }
+}
+
