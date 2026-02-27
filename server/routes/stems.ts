@@ -234,14 +234,14 @@ router.get('/health', async (_req, res) => {
     const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
     let settled = false;
     const timeoutId = setTimeout(() => {
-      console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms (${HEALTH_CHECK_TIMEOUT_MS / 1000}s)`);
+      console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
       proc.kill('SIGTERM');
       finish(false);
     }, HEALTH_CHECK_TIMEOUT_MS);
     function finish(value: boolean) {
       if (settled) return;
       settled = true;
-      if (proc.exitCode === null && proc.pid && !proc.killed) {
+      if (proc.exitCode === null && proc.pid) {
         proc.kill('SIGTERM');
       }
       clearTimeout(timeoutId);
