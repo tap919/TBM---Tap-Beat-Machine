@@ -276,7 +276,7 @@ export default function App() {
       case 'vinyl':
         return (
           <div className="flex-1 p-5 overflow-hidden">
-            <VinylScratchPro />
+            <VinylScratchPro onSendToSampleEditor={() => { setActiveTab('sampler'); showNotification('success', 'Sample sent to Sample Editor'); }} />
           </div>
         );
       case 'stems':

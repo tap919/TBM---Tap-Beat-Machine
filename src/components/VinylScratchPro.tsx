@@ -29,8 +29,6 @@ import {
   Keyboard,
   GitBranch,
   Send,
-  Radio,
-  Plug,
 } from 'lucide-react';
 
 type ScratchStyle = {
@@ -87,7 +85,7 @@ const difficultyColors: Record<string, string> = {
   advanced: 'text-red-400 border-red-500/30 bg-red-500/10',
 };
 
-export function VinylScratchPro() {
+export function VinylScratchPro({ onSendToSampleEditor }: { onSendToSampleEditor?: () => void }) {
   const [activeMode, setActiveMode] = useState<'auto' | 'live' | 'editor' | 'turntable' | 'minorvdj'>('auto');
   const [selectedStyle, setSelectedStyle] = useState('baby');
   const [selectedSample, setSelectedSample] = useState('ah_yeah1');
@@ -1157,6 +1155,14 @@ export function VinylScratchPro() {
                     <span className={`font-bold ${isPlaying ? 'text-indicator' : 'text-neutral-600'}`}>{isPlaying ? 'Playing' : 'Stopped'}</span>
                   </div>
                 </div>
+
+                {/* Send to Sample Editor */}
+                <button
+                  onClick={() => onSendToSampleEditor?.()}
+                  className="w-full py-2.5 bg-brand/10 hover:bg-brand/20 text-brand text-[10px] font-bold uppercase rounded-lg border border-brand/40 hover:border-brand transition-all flex items-center justify-center gap-2"
+                >
+                  <Send size={13} /> Send to Sample Editor
+                </button>
               </div>
             </>
           )}

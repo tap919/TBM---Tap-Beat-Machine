@@ -1,6 +1,51 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Cpu, Zap, Activity, ShieldAlert, Save, Loader2, CheckCircle2, Keyboard, Sliders } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Cpu, Zap, Activity, ShieldAlert, Save, Loader2, CheckCircle2, Keyboard, Sliders, Radio, Plug } from 'lucide-react';
 import { fetchSettings, saveSettings } from '../lib/api';
+
+// ── MIDI types & constants ────────────────────────────────────────────────────
+type MidiDevice = {
+  id: string;
+  name: string;
+  deviceType: 'keyboard' | 'dj_controller' | 'pad_controller' | 'unknown';
+};
+type MidiMapping = { type: 'cc' | 'note'; channel: number; number: number };
+
+const DEFAULT_MIDI_MAPPINGS: Record<string, MidiMapping> = {
+  jog_wheel:    { type: 'cc',   channel: 0, number: 33 },
+  crossfader:   { type: 'cc',   channel: 0, number: 8  },
+  play_stop:    { type: 'note', channel: 9, number: 36 },
+  cycle_preset: { type: 'note', channel: 9, number: 37 },
+  one_shot:     { type: 'note', channel: 9, number: 38 },
+  rec_toggle:   { type: 'note', channel: 9, number: 39 },
+  auto_scratch: { type: 'note', channel: 9, number: 40 },
+  reset_cue:    { type: 'note', channel: 9, number: 41 },
+};
+
+const MIDI_MAPPINGS_KEY = 'tbm_midi_mappings';
+
+const DEVICE_TYPE_STYLES: Record<string, string> = {
+  keyboard:       'text-purple-400 border-purple-500/30 bg-purple-500/10',
+  dj_controller:  'text-brand border-brand/30 bg-brand/10',
+  pad_controller: 'text-indicator border-indicator/30 bg-indicator/10',
+  unknown:        'text-neutral-500 border-neutral-600/30 bg-neutral-600/10',
+};
+const DEVICE_TYPE_LABELS: Record<string, string> = {
+  keyboard: 'Keys', dj_controller: 'DJ', pad_controller: 'Pads', unknown: 'Ctrl',
+};
+const MAPPING_LABELS: Record<string, string> = {
+  jog_wheel: 'Jog Wheel', crossfader: 'Crossfader',
+  play_stop: 'Play / Stop', cycle_preset: 'Cycle Preset',
+  one_shot: 'One Shot', rec_toggle: 'Record',
+  auto_scratch: 'Auto Scratch', reset_cue: 'Reset Cue',
+};
+
+function detectDeviceType(name: string): MidiDevice['deviceType'] {
+  const n = name.toLowerCase();
+  if (/keyboard|piano|keys|synth|organ/.test(n)) return 'keyboard';
+  if (/dj|turntable|scratch|deck|mixer|jog/.test(n)) return 'dj_controller';
+  if (/pad|trigger|step|grid/.test(n)) return 'pad_controller';
+  return 'unknown';
+}
 
 interface SettingsState {
   driver: string;
@@ -60,11 +105,45 @@ export function SettingsView() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
+  // ── MIDI state ─────────────────────────────────────────────────────────────
+  const [midiSupported] = useState(() => 'requestMIDIAccess' in navigator);
+  const [midiEnabled, setMidiEnabled] = useState(false);
+  const [midiDevices, setMidiDevices] = useState<MidiDevice[]>([]);
+  const [midiLearnParam, setMidiLearnParam] = useState<string | null>(null);
+  const [midiMappings, setMidiMappings] = useState<Record<string, MidiMapping>>(() => {
+    try {
+      const saved = localStorage.getItem(MIDI_MAPPINGS_KEY);
+      if (saved) return JSON.parse(saved) as Record<string, MidiMapping>;
+    } catch {
+      try { localStorage.removeItem(MIDI_MAPPINGS_KEY); } catch { /* storage unavailable */ }
+    }
+    return DEFAULT_MIDI_MAPPINGS;
+  });
+  const [midiActivity, setMidiActivity] = useState(false);
+  const midiAccessRef = useRef<MIDIAccess | null>(null);
+  const midiActivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onMidiMessageRef = useRef<(event: MIDIMessageEvent) => void>(() => {});
+
   useEffect(() => {
     fetchSettings()
       .then(raw => setSettings(settingsToState(raw)))
       .catch(() => {/* keep defaults */})
       .finally(() => setIsLoading(false));
+  }, []);
+
+  // Persist MIDI mappings on change
+  useEffect(() => {
+    try {
+      localStorage.setItem(MIDI_MAPPINGS_KEY, JSON.stringify(midiMappings));
+    } catch { /* storage unavailable */ }
+  }, [midiMappings]);
+
+  // Cleanup MIDI on unmount
+  useEffect(() => {
+    return () => {
+      if (midiActivityTimerRef.current !== null) clearTimeout(midiActivityTimerRef.current);
+      midiAccessRef.current?.inputs.forEach(input => { input.onmidimessage = null; });
+    };
   }, []);
 
   const set = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) =>
@@ -83,6 +162,52 @@ export function SettingsView() {
       setIsSaving(false);
     }
   }, [settings]);
+
+  const initMidi = useCallback(async () => {
+    try {
+      const access = await navigator.requestMIDIAccess({ sysex: false });
+      midiAccessRef.current = access;
+      setMidiEnabled(true);
+      const attachInputs = () => {
+        const devs: MidiDevice[] = [];
+        access.inputs.forEach(input => {
+          devs.push({
+            id: input.id,
+            name: input.name ?? 'Unknown Device',
+            deviceType: detectDeviceType(input.name ?? ''),
+          });
+          input.onmidimessage = (event) => onMidiMessageRef.current(event);
+        });
+        setMidiDevices(devs);
+      };
+      attachInputs();
+      access.onstatechange = () => { attachInputs(); };
+    } catch {
+      setMidiEnabled(false);
+    }
+  }, []);
+
+  // Keep MIDI handler fresh on every render so it reads current midiLearnParam/midiMappings
+  onMidiMessageRef.current = (event: MIDIMessageEvent) => {
+    const data = event.data;
+    if (!data || data.length < 3) return;
+    const status = data[0];
+    const data1 = data[1];
+    const data2 = data[2];
+    const msgType = status & 0xF0;
+    const channel = status & 0x0F;
+    setMidiActivity(true);
+    if (midiActivityTimerRef.current !== null) clearTimeout(midiActivityTimerRef.current);
+    midiActivityTimerRef.current = setTimeout(() => setMidiActivity(false), 150);
+    if (midiLearnParam !== null) {
+      if (msgType === 0xB0) {
+        setMidiMappings(prev => ({ ...prev, [midiLearnParam]: { type: 'cc', channel, number: data1 } }));
+      } else if (msgType === 0x90 && data2 > 0) {
+        setMidiMappings(prev => ({ ...prev, [midiLearnParam]: { type: 'note', channel, number: data1 } }));
+      }
+      setMidiLearnParam(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -241,34 +366,154 @@ export function SettingsView() {
           </div>
         </div>
 
-        {/* ── MIDI & Input ── */}
+        {/* ── MIDI & Controllers ── */}
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3 text-emerald-400">
-            <Keyboard size={18} />
-            <h3 className="text-sm font-bold uppercase tracking-widest">MIDI & Input</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-emerald-400">
+              <Radio size={18} />
+              <h3 className="text-sm font-bold uppercase tracking-widest">MIDI & Controllers</h3>
+            </div>
+            {midiActivity && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-indicator animate-pulse shadow-[0_0_6px_var(--indicator-glow)]" />
+                <span className="text-[9px] font-mono text-indicator uppercase">RX</span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
+            {/* Connect / status */}
+            {!midiSupported ? (
+              <div className="text-[10px] text-neutral-500 font-mono px-1">
+                Web MIDI not supported in this browser.
+              </div>
+            ) : !midiEnabled ? (
+              <button
+                onClick={initMidi}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 text-[11px] font-bold uppercase rounded-lg border border-emerald-600/30 transition-all"
+              >
+                <Plug size={13} /> Connect MIDI Devices
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-600/10 rounded-lg border border-emerald-600/30">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-emerald-400 uppercase">MIDI Connected</span>
+                <span className="ml-auto text-[10px] font-mono text-neutral-500">
+                  {midiDevices.length} device{midiDevices.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+
+            {/* Detected devices */}
+            {midiEnabled && (
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-mono text-neutral-500 uppercase">Detected Devices</span>
+                {midiDevices.length === 0 ? (
+                  <div className="text-[10px] text-neutral-600 font-mono px-1">
+                    No MIDI devices found. Connect a device and click Refresh.
+                  </div>
+                ) : (
+                  midiDevices.map(dev => (
+                    <div key={dev.id} className="flex items-center gap-2 px-3 py-2 bg-neutral-950 rounded-lg border border-neutral-800">
+                      <div className="w-1.5 h-1.5 rounded-full bg-indicator flex-shrink-0" />
+                      <span className="text-[10px] text-neutral-300 flex-1 truncate font-mono">{dev.name}</span>
+                      <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded border flex-shrink-0 ${DEVICE_TYPE_STYLES[dev.deviceType]}`}>
+                        {DEVICE_TYPE_LABELS[dev.deviceType]}
+                      </span>
+                    </div>
+                  ))
+                )}
+                <button
+                  onClick={initMidi}
+                  className="text-[9px] font-bold text-neutral-600 hover:text-neutral-400 uppercase transition-colors self-start px-1"
+                >
+                  Refresh Devices
+                </button>
+              </div>
+            )}
+
+            {/* Mappings */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-mono text-neutral-500 uppercase">MIDI Input Device</label>
-              <select 
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-neutral-500 uppercase">Controller Mappings</span>
+                <button
+                  onClick={() => setMidiMappings(DEFAULT_MIDI_MAPPINGS)}
+                  className="text-[9px] font-bold text-neutral-600 hover:text-red-400 uppercase transition-colors"
+                >
+                  Reset All
+                </button>
+              </div>
+
+              {/* DJ Controllers group */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-bold text-brand/70 uppercase tracking-wider px-1">DJ Controllers</span>
+                {(['jog_wheel', 'crossfader'] as const).map(key => {
+                  const m = midiMappings[key] ?? DEFAULT_MIDI_MAPPINGS[key];
+                  const isLearning = midiLearnParam === key;
+                  return (
+                    <div key={key} className="flex items-center gap-2 px-2 py-1.5 rounded bg-neutral-950 border border-neutral-800 text-[10px] font-mono">
+                      <span className="text-neutral-400 flex-1">{MAPPING_LABELS[key]}</span>
+                      <span className="text-neutral-500 w-14 text-right">
+                        {m.type === 'cc' ? `CC-${m.number}` : `N-${m.number}`}
+                      </span>
+                      <button
+                        onClick={() => setMidiLearnParam(isLearning ? null : key)}
+                        className={`px-2 py-0.5 rounded border text-[8px] font-bold uppercase transition-all ${
+                          isLearning
+                            ? 'bg-brand text-white border-brand animate-pulse'
+                            : 'text-neutral-600 border-neutral-700 hover:border-brand hover:text-brand'
+                        }`}
+                      >
+                        {isLearning ? 'Move…' : 'Learn'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Transport & Triggers group */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-bold text-indicator/70 uppercase tracking-wider px-1">Transport & Triggers</span>
+                {(['play_stop', 'auto_scratch', 'one_shot', 'rec_toggle', 'cycle_preset', 'reset_cue'] as const).map(key => {
+                  const m = midiMappings[key] ?? DEFAULT_MIDI_MAPPINGS[key];
+                  const isLearning = midiLearnParam === key;
+                  return (
+                    <div key={key} className="flex items-center gap-2 px-2 py-1.5 rounded bg-neutral-950 border border-neutral-800 text-[10px] font-mono">
+                      <span className="text-neutral-400 flex-1">{MAPPING_LABELS[key]}</span>
+                      <span className="text-neutral-500 w-14 text-right">
+                        {m.type === 'cc' ? `CC-${m.number}` : `N-${m.number}`}
+                      </span>
+                      <button
+                        onClick={() => setMidiLearnParam(isLearning ? null : key)}
+                        className={`px-2 py-0.5 rounded border text-[8px] font-bold uppercase transition-all ${
+                          isLearning
+                            ? 'bg-brand text-white border-brand animate-pulse'
+                            : 'text-neutral-600 border-neutral-700 hover:border-brand hover:text-brand'
+                        }`}
+                      >
+                        {isLearning ? 'Move…' : 'Learn'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Preferred saved device (persisted to backend) */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-mono text-neutral-500 uppercase">Preferred Input Device</label>
+              <select
                 value={settings.midiDevice}
                 onChange={(e) => set('midiDevice', e.target.value)}
                 className="bg-neutral-800 border border-neutral-700 text-neutral-300 text-sm rounded-md p-2 outline-none focus:border-brand"
               >
-                <option>TBM Controller 49</option>
+                <option>No Device</option>
                 <option>USB MIDI Keyboard</option>
                 <option>Virtual MIDI Bus</option>
-                <option>No Device</option>
+                {midiDevices.map(d => (
+                  <option key={d.id} value={d.name}>{d.name}</option>
+                ))}
               </select>
-            </div>
-
-            <div className="bg-neutral-950 p-4 rounded-lg border border-neutral-800 flex items-start gap-3">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 animate-pulse flex-shrink-0"></div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-emerald-400 uppercase">Device Connected</span>
-                <span className="text-[10px] text-neutral-500 font-mono">{settings.midiDevice} · 128 channels</span>
-              </div>
             </div>
           </div>
         </div>
