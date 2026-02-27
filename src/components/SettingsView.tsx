@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Cpu, Zap, Activity, ShieldAlert, Save, Loader2, CheckCircle2, Keyboard, Sliders, Radio, Plug } from 'lucide-react';
+import { Cpu, Zap, Activity, ShieldAlert, Save, Loader2, CheckCircle2, Sliders, Radio, Plug } from 'lucide-react';
 import { fetchSettings, saveSettings } from '../lib/api';
 
 // ── MIDI types & constants ────────────────────────────────────────────────────
