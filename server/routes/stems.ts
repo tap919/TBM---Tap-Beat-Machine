@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, type NextFunction } from 'express';
 import multer from 'multer';
 import { spawn, spawnSync } from 'child_process';
 import path from 'path';
@@ -229,61 +229,65 @@ const router = Router();
  * GET /api/stems/health
  * Returns whether demucs is installed and which models are cached.
  */
-router.get('/health', async (_req, res) => {
-  const health = await new Promise<{ installed: boolean; error?: string }>((resolve) => {
-    const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
-    let settled = false;
-    let failureReason: string | undefined;
-    const timeoutId = setTimeout(() => {
-      failureReason = 'timeout';
-      console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
-      proc.kill('SIGTERM');
-      finish(false);
-    }, HEALTH_CHECK_TIMEOUT_MS);
-    function finish(value: boolean) {
-      if (settled) return;
-      settled = true;
-      if (!value && !failureReason) {
-        failureReason = 'exit';
-      }
-      if (proc.exitCode === null && proc.pid) {
-        proc.kill('SIGTERM');
-      }
-      clearTimeout(timeoutId);
-      proc.removeAllListeners('error');
-      proc.removeAllListeners('close');
-      resolve({ installed: value, error: failureReason });
-    }
-    proc.once('error', () => {
-      failureReason = 'spawn_error';
-      finish(false);
-    });
-    proc.once('close', (code) => {
-      if (code !== 0 && !failureReason) {
-        failureReason = `exit_${code ?? 'unknown'}`;
-      }
-      finish(code === 0);
-    });
-  });
-
-  // Check torch hub cache for .th files (demucs model weights)
-  const torchCacheDir = path.join(os.homedir(), '.cache', 'torch', 'hub', 'checkpoints');
-  let cachedModels: string[] = [];
+router.get('/health', async (_req, res, next: NextFunction) => {
   try {
-    // Demucs weight files are named like "<8hexchars>-<8hexchars>.th"
-    // The 8-char hex prefix is the model identifier
-    cachedModels = (await fs.promises.readdir(torchCacheDir))
-      .filter(f => /^[0-9a-f]{8}-[0-9a-f]{8}\.th$/i.test(f))
-      .map(f => f.replace(/-[0-9a-f]{8}\.th$/i, '')); // keep just the model ID prefix
-  } catch { /* cache dir may not exist yet */ }
+    const health = await new Promise<{ installed: boolean; error?: string }>((resolve) => {
+      const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
+      let settled = false;
+      let failureReason: string | undefined;
+      const timeoutId = setTimeout(() => {
+        failureReason = 'timeout';
+        console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
+        proc.kill('SIGTERM');
+        finish(false);
+      }, HEALTH_CHECK_TIMEOUT_MS);
+      function finish(value: boolean) {
+        if (settled) return;
+        settled = true;
+        if (!value && !failureReason) {
+          failureReason = 'exit';
+        }
+        if (proc.exitCode === null && proc.pid) {
+          proc.kill('SIGTERM');
+        }
+        clearTimeout(timeoutId);
+        proc.removeAllListeners('error');
+        proc.removeAllListeners('close');
+        resolve({ installed: value, error: failureReason });
+      }
+      proc.once('error', () => {
+        failureReason = 'spawn_error';
+        finish(false);
+      });
+      proc.once('close', (code) => {
+        if (code !== 0 && !failureReason) {
+          failureReason = `exit_${code ?? 'unknown'}`;
+        }
+        finish(code === 0);
+      });
+    });
 
-  res.json({
-    installed: health.installed,
-    python: PYTHON,
-    cachedModels: [...new Set(cachedModels)],
-    modelsDir: torchCacheDir,
-    healthError: health.error,
-  });
+    // Check torch hub cache for .th files (demucs model weights)
+    const torchCacheDir = path.join(os.homedir(), '.cache', 'torch', 'hub', 'checkpoints');
+    let cachedModels: string[] = [];
+    try {
+      // Demucs weight files are named like "<8hexchars>-<8hexchars>.th"
+      // The 8-char hex prefix is the model identifier
+      cachedModels = (await fs.promises.readdir(torchCacheDir))
+        .filter(f => /^[0-9a-f]{8}-[0-9a-f]{8}\.th$/i.test(f))
+        .map(f => f.replace(/-[0-9a-f]{8}\.th$/i, '')); // keep just the model ID prefix
+    } catch { /* cache dir may not exist yet */ }
+
+    res.json({
+      installed: health.installed,
+      python: PYTHON,
+      cachedModels: [...new Set(cachedModels)],
+      modelsDir: torchCacheDir,
+      healthError: health.error,
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
@@ -389,8 +393,6 @@ router.get('/jobs/:jobId/download/:stem', (req: Request, res: Response) => {
 });
 
 // ── Multer error handler ──────────────────────────────────────────────────────
-import type { NextFunction } from 'express';
-
 // Must be an Express 4-argument error middleware
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 router.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
