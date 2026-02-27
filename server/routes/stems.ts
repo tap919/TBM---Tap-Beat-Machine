@@ -42,6 +42,7 @@ const jobs = new Map<string, StemJob>();
 
 // Expire jobs older than 1 hour
 const JOB_TTL_MS = 60 * 60 * 1000;
+const HEALTH_CHECK_TIMEOUT_MS = 8000;
 setInterval(() => {
   const now = Date.now();
   for (const [id, job] of jobs) {
@@ -235,13 +236,11 @@ router.get('/health', async (_req, res) => {
     const timeoutId = setTimeout(() => {
       proc.kill();
       finish(false);
-    }, 8000);
+    }, HEALTH_CHECK_TIMEOUT_MS);
     function finish(value: boolean) {
       if (settled) return;
       settled = true;
       clearTimeout(timeoutId);
-      proc.removeAllListeners('error');
-      proc.removeAllListeners('close');
       resolve(value);
     }
     proc.once('error', () => finish(false));
