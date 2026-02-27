@@ -1,0 +1,5 @@
+{
+  "name": "OmniChop Pro",
+  "description": "A web-based UI simulation of the OmniChop Pro VST instrument plugin, featuring a wave chopper, 808 mixer, FX macros, and a chord generator.",
+  "requestFramePermissions": []
+}
