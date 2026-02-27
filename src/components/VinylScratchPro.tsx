@@ -214,19 +214,30 @@ export function VinylScratchPro({ onSendToSampleEditor }: { onSendToSampleEditor
   }, [activeMode, autoDj, bpm, playlist]);
 
   // Turntable platter animation
+  const platAngleRef = useRef(0);
   useEffect(() => {
     if (platAnimRef.current !== null) cancelAnimationFrame(platAnimRef.current);
     if (activeMode !== 'turntable' || !isPlaying) return;
+
     let lastTime = performance.now();
     const step = (now: number) => {
       const delta = (now - lastTime) / 1000; // seconds
       lastTime = now;
-      setPlatAngle(a => (a + (vinylRpm / 60) * speedMult * 360 * delta) % 360);
+      // Update the platter angle in a ref to avoid triggering React re-renders on every frame
+      platAngleRef.current = (platAngleRef.current + (vinylRpm / 60) * speedMult * 360 * delta) % 360;
       platAnimRef.current = requestAnimationFrame(step);
     };
+
     platAnimRef.current = requestAnimationFrame(step);
+
+    // Periodically sync the ref back to React state at a lower frequency
+    const syncInterval = window.setInterval(() => {
+      setPlatAngle(platAngleRef.current);
+    }, 100);
+
     return () => {
       if (platAnimRef.current !== null) cancelAnimationFrame(platAnimRef.current);
+      window.clearInterval(syncInterval);
     };
   }, [activeMode, isPlaying, vinylRpm, speedMult]);
 
