@@ -234,7 +234,7 @@ router.get('/health', async (_req, res) => {
     const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
     let settled = false;
     const timeoutId = setTimeout(() => {
-      console.warn('Demucs health check timed out');
+      console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
       proc.kill();
       finish(false);
     }, HEALTH_CHECK_TIMEOUT_MS);
@@ -358,13 +358,10 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
     return;
   }
 
+  res.setHeader('Content-Type', 'audio/mpeg');
+  res.setHeader('Content-Disposition', `attachment; filename="${stemName}.mp3"`);
+  res.setHeader('Accept-Ranges', 'bytes');
   const stream = fs.createReadStream(stemFile);
-  stream.once('open', () => {
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', `attachment; filename="${stemName}.mp3"`);
-    res.setHeader('Accept-Ranges', 'bytes');
-    stream.pipe(res);
-  });
   stream.on('error', (err) => {
     if (!res.headersSent) {
       res.status(500).json({ error: 'Failed to stream stem file' });
@@ -372,6 +369,7 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
       res.destroy(err);
     }
   });
+  stream.pipe(res);
 });
 
 // ── Multer error handler ──────────────────────────────────────────────────────
