@@ -232,19 +232,20 @@ router.get('/health', async (_req, res) => {
   const installed = await new Promise<boolean>((resolve) => {
     const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
     let settled = false;
-    let timeoutId: NodeJS.Timeout;
-    const finish = (value: boolean) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeoutId);
-      resolve(value);
-    };
-    timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       proc.kill();
       finish(false);
     }, 8000);
-    proc.on('error', () => finish(false));
-    proc.on('close', (code) => finish(code === 0));
+    function finish(value: boolean) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      proc.removeAllListeners('error');
+      proc.removeAllListeners('close');
+      resolve(value);
+    }
+    proc.once('error', () => finish(false));
+    proc.once('close', (code) => finish(code === 0));
   });
 
   // Check torch hub cache for .th files (demucs model weights)
