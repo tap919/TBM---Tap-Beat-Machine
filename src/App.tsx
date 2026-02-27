@@ -22,6 +22,7 @@ import { ThemeSettings } from './components/ThemeSettings';
 import { PianoRoll } from './components/PianoRoll';
 import { SessionMusician } from './components/SessionMusician';
 import { VinylScratchPro } from './components/VinylScratchPro';
+import { StemSeparator } from './components/StemSeparator';
 import { 
   Download, X, Settings, Save, FileAudio, FileMusic, 
   ChevronDown, AlertCircle, CheckCircle2, Undo2, Redo2, 
@@ -30,19 +31,56 @@ import {
 
 const AUTO_SAVE_KEY = 'tbm_autosave_state';
 const AUTO_SAVE_INTERVAL_MS = 15000;
-const KNOWN_TABS = ['sampler', 'pianoroll', 'session', 'library', 'plugins', 'theme', 'drums', 'hats', 'chords', 'mod', 'mixer', 'vinyl', 'settings'] as const;
+const KNOWN_TABS = ['sampler', 'pianoroll', 'session', 'library', 'plugins', 'theme', 'drums', 'hats', 'chords', 'mod', 'mixer', 'vinyl', 'stems', 'settings'] as const;
+
+type ProjectSnapshot = { key: string; abState: 'A' | 'B' };
 
 export default function App() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState('sampler');
-  const [projectKey, setProjectKey] = useState('Cm');
+  const [isPanic, setIsPanic] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const [activeState, setActiveState] = useState<'A' | 'B'>('A');
-  const [isPanic, setIsPanic] = useState(false);
+
+  // ── Undoable project snapshot (key + A/B state) ──
+  const [snapshot, setSnapshot] = useState<ProjectSnapshot>({ key: 'Cm', abState: 'A' });
+  const [undoStack, setUndoStack] = useState<ProjectSnapshot[]>([]);
+  const [redoStack, setRedoStack] = useState<ProjectSnapshot[]>([]);
+
+  const projectKey = snapshot.key;
+  const activeState = snapshot.abState;
+
+  const pushSnapshot = useCallback((next: ProjectSnapshot) => {
+    setUndoStack(prev => [...prev.slice(-49), snapshot]);
+    setRedoStack([]);
+    setSnapshot(next);
+  }, [snapshot]);
+
+  const setProjectKey = (k: string) => pushSnapshot({ ...snapshot, key: k });
+  const setActiveState = (s: 'A' | 'B') => pushSnapshot({ ...snapshot, abState: s });
+
+  const handleUndo = useCallback(() => {
+    setUndoStack(prev => {
+      if (prev.length === 0) return prev;
+      const top = prev[prev.length - 1];
+      setRedoStack(r => [snapshot, ...r]);
+      setSnapshot(top);
+      return prev.slice(0, -1);
+    });
+  }, [snapshot]);
+
+  const handleRedo = useCallback(() => {
+    setRedoStack(prev => {
+      if (prev.length === 0) return prev;
+      const top = prev[0];
+      setUndoStack(u => [...u, snapshot]);
+      setSnapshot(top);
+      return prev.slice(1);
+    });
+  }, [snapshot]);
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -53,8 +91,9 @@ export default function App() {
       if (saved) {
         const { tab, key, state } = JSON.parse(saved) as Record<string, unknown>;
         if (typeof tab === 'string' && (KNOWN_TABS as readonly string[]).includes(tab)) setActiveTab(tab);
-        if (typeof key === 'string' && key.length > 0) setProjectKey(key);
-        if (state === 'A' || state === 'B') setActiveState(state);
+        const k = typeof key === 'string' && key.length > 0 ? key : 'Cm';
+        const s: 'A' | 'B' = (state === 'A' || state === 'B') ? state : 'A';
+        setSnapshot({ key: k, abState: s });
         const ts = localStorage.getItem(AUTO_SAVE_KEY + '_ts');
         if (ts) setLastSavedAt(new Date(ts));
       }
@@ -64,8 +103,8 @@ export default function App() {
   // ── Auto-save: persist on interval ──
   const performAutoSave = useCallback(() => {
     try {
-      const snapshot = { tab: activeTab, key: projectKey, state: activeState };
-      localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(snapshot));
+      const snap = { tab: activeTab, key: projectKey, state: activeState };
+      localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(snap));
       const now = new Date();
       localStorage.setItem(AUTO_SAVE_KEY + '_ts', now.toISOString());
       setLastSavedAt(now);
@@ -82,6 +121,18 @@ export default function App() {
       if (autoSaveTimerRef.current !== null) clearTimeout(autoSaveTimerRef.current);
     };
   }, [performAutoSave]);
+
+  // ── Keyboard shortcuts: Ctrl+Z undo, Ctrl+Y / Ctrl+Shift+Z redo ──
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (!ctrl) return;
+      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleUndo, handleRedo]);
 
   const handlePanic = () => {
     setIsPanic(true);
@@ -215,6 +266,12 @@ export default function App() {
             <VinylScratchPro />
           </div>
         );
+      case 'stems':
+        return (
+          <div className="flex-1 p-5 overflow-hidden">
+            <StemSeparator />
+          </div>
+        );
       case 'settings':
         return (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -244,10 +301,20 @@ export default function App() {
 
           {/* Undo / Redo */}
           <div className="flex items-center gap-0.5">
-            <button className="p-1.5 rounded text-neutral-600 hover:text-neutral-300 hover:bg-bg-main/80 transition-all" title="Undo">
+            <button
+              onClick={handleUndo}
+              disabled={undoStack.length === 0}
+              className={`p-1.5 rounded transition-all ${undoStack.length > 0 ? 'text-neutral-400 hover:text-neutral-200 hover:bg-bg-main/80' : 'text-neutral-700 cursor-not-allowed'}`}
+              title={`Undo${undoStack.length > 0 ? ` (${undoStack.length})` : ''} · Ctrl+Z`}
+            >
               <Undo2 size={11} />
             </button>
-            <button className="p-1.5 rounded text-neutral-600 hover:text-neutral-300 hover:bg-bg-main/80 transition-all" title="Redo">
+            <button
+              onClick={handleRedo}
+              disabled={redoStack.length === 0}
+              className={`p-1.5 rounded transition-all ${redoStack.length > 0 ? 'text-neutral-400 hover:text-neutral-200 hover:bg-bg-main/80' : 'text-neutral-700 cursor-not-allowed'}`}
+              title={`Redo${redoStack.length > 0 ? ` (${redoStack.length})` : ''} · Ctrl+Y`}
+            >
               <Redo2 size={11} />
             </button>
           </div>
