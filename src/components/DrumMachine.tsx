@@ -213,7 +213,7 @@ export function DrumMachine() {
                             key={`empty-${step}`}
                             className="absolute h-full cursor-pointer hover:bg-white/5 transition-colors"
                             style={{ left: `${step * STEP_W}%`, width: `${STEP_W}%` }}
-                            onClick={() => { if (!activeSteps.includes(step)) toggleStep(track.id, step); }}
+                            onClick={() => toggleStep(track.id, step)}
                           />
                         ))}
                       </div>
