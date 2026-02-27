@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Scissors,
   UploadCloud,
@@ -63,8 +63,49 @@ export function StemSeparator() {
   const [showModelMenu, setShowModelMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const modelMenuRef = useRef<HTMLDivElement>(null);
 
   const selectedModel = MODELS.find(m => m.id === model) ?? MODELS[0];
+
+  // Pre-generate deterministic waveform heights per stem id so they are stable across re-renders
+  const waveformData = useMemo<Record<string, number[]>>(() => {
+    const all = [...INITIAL_STEMS, ...EXTRA_STEMS];
+    const result: Record<string, number[]> = {};
+    for (const stem of all) {
+      result[stem.id] = Array.from({ length: 80 }, (_, i) => {
+        const phase = i * 0.3 + stem.id.charCodeAt(0);
+        const h = Math.sin(phase) * 0.4 + Math.cos(phase * 0.7) * 0.2 + 0.6;
+        return Math.max(0.1, Math.min(1, h));
+      });
+    }
+    return result;
+  }, []);
+
+  // Close model menu when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!showModelMenu) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (modelMenuRef.current && !modelMenuRef.current.contains(e.target as Node)) {
+        setShowModelMenu(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowModelMenu(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showModelMenu]);
+
+  // Cleanup interval on unmount to prevent state updates on an unmounted component
+  useEffect(() => {
+    return () => {
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, []);
 
   const handleFile = (file: File) => {
     if (!(file.type.startsWith('audio/') || file.name.match(/\.(mp3|wav|flac|aiff?|ogg|m4a)$/i))) {
@@ -155,7 +196,7 @@ export function StemSeparator() {
         </div>
 
         {/* Model picker */}
-        <div className="relative">
+        <div className="relative" ref={modelMenuRef}>
           <button
             onClick={() => setShowModelMenu(v => !v)}
             className="flex items-center gap-2 bg-bg-main/70 border border-border-main rounded-lg px-3 py-1.5 text-[10px] font-bold text-neutral-300 hover:border-brand/50 transition-all"
@@ -190,6 +231,9 @@ export function StemSeparator() {
           {/* Drop zone */}
           {status === 'idle' || status === 'error' ? (
             <div
+              role="button"
+              tabIndex={0}
+              aria-label="Drop audio file or click to browse"
               className={`flex-1 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[180px] ${
                 isDragging
                   ? 'border-brand bg-brand/5'
@@ -199,6 +243,7 @@ export function StemSeparator() {
               onDragLeave={() => setIsDragging(false)}
               onDrop={e => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
               onClick={() => fileRef.current?.click()}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click(); } }}
             >
               <UploadCloud size={32} className="text-neutral-600 opacity-60" />
               <div className="text-center px-4">
@@ -225,7 +270,14 @@ export function StemSeparator() {
                     <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest mb-2">
                       {status === 'uploading' ? 'Uploading…' : 'Separating Stems…'}
                     </p>
-                    <div className="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      role="progressbar"
+                      aria-valuenow={progress}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={status === 'uploading' ? 'Upload progress' : 'Stem separation progress'}
+                      className="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden"
+                    >
                       <div
                         className="h-full bg-brand rounded-full transition-all duration-200"
                         style={{ width: `${progress}%` }}
@@ -348,20 +400,17 @@ export function StemSeparator() {
                 {stem.ready ? (
                   <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
                     <g opacity={stem.muted ? 0.2 : 0.7}>
-                      {Array.from({ length: 80 }, (_, i) => {
-                        const h = (Math.sin(i * 0.3 + stem.id.charCodeAt(0)) * 0.4 + Math.random() * 0.3 + 0.2);
-                        return (
-                          <rect
-                            key={i}
-                            x={`${(i / 80) * 100}%`}
-                            y={`${50 - h * 45}%`}
-                            width="1.1%"
-                            height={`${h * 90}%`}
-                            rx="1"
-                            fill={stem.color}
-                          />
-                        );
-                      })}
+                      {(waveformData[stem.id] ?? []).map((h, i) => (
+                        <rect
+                          key={i}
+                          x={`${(i / 80) * 100}%`}
+                          y={`${50 - h * 45}%`}
+                          width="1.1%"
+                          height={`${h * 90}%`}
+                          rx="1"
+                          fill={stem.color}
+                        />
+                      ))}
                     </g>
                     {playingId === stem.id && (
                       <line x1="30%" y1="0" x2="30%" y2="100%" stroke={stem.color} strokeWidth="1.5" opacity="0.8" />

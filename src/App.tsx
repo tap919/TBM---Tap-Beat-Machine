@@ -54,7 +54,7 @@ export default function App() {
   const activeState = snapshot.abState;
 
   const pushSnapshot = useCallback((next: ProjectSnapshot) => {
-    setUndoStack(prev => [...prev.slice(-50), snapshot]);
+    setUndoStack(prev => [...prev, snapshot].slice(-50));
     setRedoStack([]);
     setSnapshot(next);
   }, [snapshot]);
@@ -66,7 +66,7 @@ export default function App() {
     setUndoStack(prev => {
       if (prev.length === 0) return prev;
       const top = prev[prev.length - 1];
-      setRedoStack(r => [snapshot, ...r]);
+      setRedoStack(r => [snapshot, ...r].slice(0, 50));
       setSnapshot(top);
       return prev.slice(0, -1);
     });
@@ -76,7 +76,7 @@ export default function App() {
     setRedoStack(prev => {
       if (prev.length === 0) return prev;
       const top = prev[0];
-      setUndoStack(u => [...u, snapshot]);
+      setUndoStack(u => [...u, snapshot].slice(-50));
       setSnapshot(top);
       return prev.slice(1);
     });
