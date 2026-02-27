@@ -234,6 +234,7 @@ router.get('/health', async (_req, res) => {
     const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
     let settled = false;
     const timeoutId = setTimeout(() => {
+      console.warn('Demucs health check timed out');
       proc.kill();
       finish(false);
     }, HEALTH_CHECK_TIMEOUT_MS);
@@ -368,7 +369,6 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
     if (!res.headersSent) {
       res.status(500).json({ error: 'Failed to stream stem file' });
     } else {
-      stream.destroy();
       res.destroy(err);
     }
   });
