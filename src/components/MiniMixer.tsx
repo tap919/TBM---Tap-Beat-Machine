@@ -87,10 +87,10 @@ export function MiniMixer() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-sm font-bold text-neutral-500 uppercase tracking-widest">SSL Console</h2>
-        <div className="flex items-center gap-1">
-          <div className="w-1 h-1 rounded-full bg-red-500 animate-pulse"></div>
-          <span className="text-[8px] font-mono text-neutral-600 uppercase">VCA Group 1</span>
+        <h2 className="text-[11px] font-black text-neutral-400 uppercase tracking-widest">SSL Console</h2>
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-bg-main/50 border border-border-main">
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.5)]"></div>
+          <span className="text-[8px] font-bold font-mono text-neutral-600 uppercase">VCA Group 1</span>
         </div>
       </div>
       <div className="flex-1 flex items-start justify-around">

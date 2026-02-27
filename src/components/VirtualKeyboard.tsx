@@ -55,19 +55,19 @@ export function VirtualKeyboard() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col gap-1">
       {/* Labels */}
-      <div className="flex justify-between px-2 mb-2">
+      <div className="flex justify-between px-1">
         {OCTAVES.map((oct, i) => (
-          <div key={i} className="flex items-center gap-2" style={{ width: `${(oct.count / 6) * 100}%` }}>
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: oct.color }}></div>
-            <span className="text-xs font-mono text-neutral-500 uppercase">{oct.label} ({oct.range})</span>
+          <div key={i} className="flex items-center gap-1.5" style={{ width: `${(oct.count / 6) * 100}%` }}>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: oct.color }}></div>
+            <span className="text-[8px] font-bold font-mono text-neutral-600 uppercase tracking-wider">{oct.label} <span className="text-neutral-700 font-normal">{oct.range}</span></span>
           </div>
         ))}
       </div>
       
       {/* Keys Container */}
-      <div className="flex-1 flex w-full bg-black rounded-t-sm rounded-b-lg p-1 pb-2 shadow-2xl">
+      <div className="flex-1 flex w-full bg-black rounded-sm overflow-hidden shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
         {OCTAVES.map((oct, i) => (
           <React.Fragment key={i}>
             {renderOctave(i * 2, oct.color)}

@@ -8,44 +8,72 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const menuItems = [
-    { id: 'sampler', icon: <Waves size={20} />, label: 'Sampler' },
-    { id: 'library', icon: <Library size={20} />, label: 'Kontakt Library' },
-    { id: 'plugins', icon: <Cpu size={20} />, label: 'VST Plugins' },
-    { id: 'theme', icon: <Palette size={20} />, label: 'Theme' },
-    { id: 'drums', icon: <Grid3X3 size={20} />, label: 'Drums' },
-    { id: 'hats', icon: <Music size={20} />, label: 'Hat Sequencer' },
-    { id: 'chords', icon: <Music size={20} />, label: 'Chords' },
-    { id: 'mod', icon: <Activity size={20} />, label: 'Mod Matrix' },
-    { id: 'mixer', icon: <Sliders size={20} />, label: 'Mixer' },
-    { id: 'settings', icon: <Settings size={20} />, label: 'Settings' },
+    { id: 'sampler',  icon: <Waves size={17} />,    label: 'Sampler'  },
+    { id: 'library',  icon: <Library size={17} />,  label: 'Library'  },
+    { id: 'plugins',  icon: <Cpu size={17} />,      label: 'Plugins'  },
+    { id: 'theme',    icon: <Palette size={17} />,  label: 'Theme'    },
+    { id: 'drums',    icon: <Grid3X3 size={17} />,  label: 'Drums'    },
+    { id: 'hats',     icon: <Music size={17} />,    label: 'Hats'     },
+    { id: 'chords',   icon: <Music size={17} />,    label: 'Chords'   },
+    { id: 'mod',      icon: <Activity size={17} />, label: 'Mod'      },
+    { id: 'mixer',    icon: <Sliders size={17} />,  label: 'Mixer'    },
+    { id: 'settings', icon: <Settings size={17} />, label: 'Settings' },
   ];
 
   return (
-    <div className="w-16 bg-bg-surface border-r border-border-main flex flex-col items-center py-6 gap-8">
-      <div className="flex flex-col gap-4">
+    <div className="w-[68px] flex-shrink-0 bg-bg-surface border-r border-border-main flex flex-col items-center pt-3 pb-3 gap-0.5 overflow-y-auto custom-scrollbar">
+      {/* Nav items */}
+      <div className="flex flex-col gap-0.5 w-full px-2">
         {menuItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`p-3 rounded-xl transition-all ${
-              activeTab === item.id 
-                ? 'bg-brand text-white shadow-[0_0_15px_var(--brand-primary-glow)]' 
-                : 'text-neutral-500 hover:text-neutral-300 hover:bg-bg-main'
-            }`}
             title={item.label}
+            className={`relative w-full flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all duration-150 group ${
+              activeTab === item.id
+                ? 'bg-brand/10 text-brand shadow-[0_0_14px_var(--brand-primary-glow),inset_0_1px_0_rgba(255,255,255,0.06)]'
+                : 'text-neutral-600 hover:text-neutral-300 hover:bg-bg-main/70'
+            }`}
           >
-            {item.icon}
+            <span className={`transition-transform duration-150 ${activeTab !== item.id ? 'group-hover:scale-110' : ''}`}>
+              {item.icon}
+            </span>
+            <span className={`text-[8px] font-bold uppercase tracking-wide leading-none ${
+              activeTab === item.id ? 'text-brand' : 'text-neutral-600 group-hover:text-neutral-400'
+            }`}>
+              {item.label}
+            </span>
+            {/* Active indicator */}
+            {activeTab === item.id && (
+              <span className="absolute left-0 w-0.5 h-6 bg-brand rounded-r-full shadow-[0_0_6px_var(--brand-primary-glow)]" />
+            )}
           </button>
         ))}
       </div>
 
-      <div className="mt-auto flex flex-col gap-4">
-        <button className="p-3 text-neutral-500 hover:text-neutral-300 transition-colors" title="Open Program">
-          <FolderOpen size={20} />
-        </button>
-        <button className="p-3 text-neutral-500 hover:text-neutral-300 transition-colors" title="Save Program">
-          <Save size={20} />
-        </button>
+      {/* Spacer */}
+      <div className="flex-1 min-h-3"></div>
+
+      {/* Divider */}
+      <div className="w-8 h-px bg-border-main mx-auto mb-1"></div>
+
+      {/* Footer actions */}
+      <div className="flex flex-col gap-0.5 w-full px-2">
+        {[
+          { icon: <FolderOpen size={17} />, label: 'Open',  title: 'Open Program' },
+          { icon: <Save size={17} />,       label: 'Save',  title: 'Save Program' },
+        ].map(btn => (
+          <button
+            key={btn.label}
+            title={btn.title}
+            className="w-full flex flex-col items-center gap-1 py-2.5 text-neutral-600 hover:text-neutral-300 hover:bg-bg-main/70 rounded-xl transition-all duration-150 group"
+          >
+            <span className="group-hover:scale-110 transition-transform duration-150">{btn.icon}</span>
+            <span className="text-[8px] font-bold uppercase tracking-wide leading-none text-neutral-600 group-hover:text-neutral-400">
+              {btn.label}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
