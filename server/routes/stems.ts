@@ -229,7 +229,7 @@ const router = Router();
  * GET /api/stems/health
  * Returns whether demucs is installed and which models are cached.
  */
-router.get('/health', async (_req, res, next: NextFunction) => {
+router.get('/health', async (_req, res, next) => {
   try {
     const health = await new Promise<{ installed: boolean; error?: string }>((resolve) => {
       const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
