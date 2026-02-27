@@ -39,6 +39,30 @@ const MAPPING_LABELS: Record<string, string> = {
   auto_scratch: 'Auto Scratch', reset_cue: 'Reset Cue',
 };
 
+function isValidMidiMapping(v: unknown): v is MidiMapping {
+  if (!v || typeof v !== 'object') return false;
+  const m = v as Record<string, unknown>;
+  return (m.type === 'cc' || m.type === 'note')
+    && typeof m.channel === 'number' && m.channel >= 0 && m.channel <= 15
+    && typeof m.number === 'number' && m.number >= 0 && m.number <= 127;
+}
+
+function loadMidiMappings(): Record<string, MidiMapping> {
+  try {
+    const saved = localStorage.getItem(MIDI_MAPPINGS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved) as Record<string, unknown>;
+      // Validate every known key; fall back to defaults if any entry is invalid
+      const allValid = Object.keys(DEFAULT_MIDI_MAPPINGS).every(k => isValidMidiMapping(parsed[k]));
+      if (allValid) return parsed as Record<string, MidiMapping>;
+      try { localStorage.removeItem(MIDI_MAPPINGS_KEY); } catch { /* storage unavailable */ }
+    }
+  } catch {
+    try { localStorage.removeItem(MIDI_MAPPINGS_KEY); } catch { /* storage unavailable */ }
+  }
+  return DEFAULT_MIDI_MAPPINGS;
+}
+
 function detectDeviceType(name: string): MidiDevice['deviceType'] {
   const n = name.toLowerCase();
   if (/keyboard|piano|keys|synth|organ/.test(n)) return 'keyboard';
@@ -110,15 +134,7 @@ export function SettingsView() {
   const [midiEnabled, setMidiEnabled] = useState(false);
   const [midiDevices, setMidiDevices] = useState<MidiDevice[]>([]);
   const [midiLearnParam, setMidiLearnParam] = useState<string | null>(null);
-  const [midiMappings, setMidiMappings] = useState<Record<string, MidiMapping>>(() => {
-    try {
-      const saved = localStorage.getItem(MIDI_MAPPINGS_KEY);
-      if (saved) return JSON.parse(saved) as Record<string, MidiMapping>;
-    } catch {
-      try { localStorage.removeItem(MIDI_MAPPINGS_KEY); } catch { /* storage unavailable */ }
-    }
-    return DEFAULT_MIDI_MAPPINGS;
-  });
+  const [midiMappings, setMidiMappings] = useState<Record<string, MidiMapping>>(loadMidiMappings);
   const [midiActivity, setMidiActivity] = useState(false);
   const midiAccessRef = useRef<MIDIAccess | null>(null);
   const midiActivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,10 +181,17 @@ export function SettingsView() {
 
   const initMidi = useCallback(async () => {
     try {
-      const access = await navigator.requestMIDIAccess({ sysex: false });
+      // Clear any previous handlers before (re-)enumerating
+      midiAccessRef.current?.inputs.forEach(input => { input.onmidimessage = null; });
+
+      // Reuse existing access object to avoid requesting permission again
+      const access = midiAccessRef.current ?? await navigator.requestMIDIAccess({ sysex: false });
       midiAccessRef.current = access;
       setMidiEnabled(true);
+
       const attachInputs = () => {
+        // Clear stale handlers first, then reattach
+        access.inputs.forEach(input => { input.onmidimessage = null; });
         const devs: MidiDevice[] = [];
         access.inputs.forEach(input => {
           devs.push({
@@ -180,6 +203,7 @@ export function SettingsView() {
         });
         setMidiDevices(devs);
       };
+
       attachInputs();
       access.onstatechange = () => { attachInputs(); };
     } catch {
@@ -507,12 +531,15 @@ export function SettingsView() {
                 onChange={(e) => set('midiDevice', e.target.value)}
                 className="bg-neutral-800 border border-neutral-700 text-neutral-300 text-sm rounded-md p-2 outline-none focus:border-brand"
               >
-                <option>No Device</option>
-                <option>USB MIDI Keyboard</option>
-                <option>Virtual MIDI Bus</option>
-                {midiDevices.map(d => (
-                  <option key={d.id} value={d.name}>{d.name}</option>
-                ))}
+                <option value="">No Device</option>
+                <option value="TBM Controller 49">TBM Controller 49</option>
+                <option value="USB MIDI Keyboard">USB MIDI Keyboard</option>
+                <option value="Virtual MIDI Bus">Virtual MIDI Bus</option>
+                {midiDevices
+                  .filter(d => !['TBM Controller 49', 'USB MIDI Keyboard', 'Virtual MIDI Bus'].includes(d.name))
+                  .map(d => (
+                    <option key={d.id} value={d.name}>{d.name}</option>
+                  ))}
               </select>
             </div>
           </div>
