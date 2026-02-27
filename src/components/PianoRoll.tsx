@@ -104,7 +104,7 @@ interface ArrangementCell {
 }
 
 function makeDefaultArrangement(sequences: Sequence[]): ArrangementCell[][] {
-  // 8 rows (tracks) × 32 columns (bars)
+  // sequences.length rows (one per sequence) × 32 columns (bars)
   const rows: ArrangementCell[][] = sequences.map(() =>
     Array.from({ length: 32 }, () => ({ seqId: null }))
   );
