@@ -150,7 +150,7 @@ function TrackView({ tracks, zoom }: { tracks: Track[]; zoom: number }) {
   }, [tool, beatWidth]);
 
   const currentTrack = localTracks.find(t => t.id === activeTrack) ?? localTracks[0];
-  const totalBars = 4;
+  const totalBars = (currentTrack as any)?.bars ?? 4;
   const totalBeats = totalBars * BEATS_PER_BAR;
   const gridWidth = totalBeats * beatWidth;
 
