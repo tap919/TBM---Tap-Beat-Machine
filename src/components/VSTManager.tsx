@@ -29,12 +29,12 @@ export function VSTManager() {
   const [scanProgress, setScanProgress] = useState(0);
 
   const [plugins, setPlugins] = useState<Plugin[]>([
-    { id: 'v1', name: 'Serum', vendor: 'Xfer Records', type: 'VST3', category: 'Synth', isEnabled: true, latency: 0 },
-    { id: 'v2', name: 'FabFilter Pro-Q 3', vendor: 'FabFilter', type: 'VST3', category: 'EQ', isEnabled: true, latency: 12 },
-    { id: 'v3', name: 'ValhallaVintageVerb', vendor: 'Valhalla DSP', type: 'VST2', category: 'Reverb', isEnabled: true, latency: 0 },
-    { id: 'v4', name: 'Omnisphere', vendor: 'Spectrasonics', type: 'VST3', category: 'Synth', isEnabled: true, latency: 0 },
-    { id: 'v5', name: 'Soundtoys Decapitator', vendor: 'Soundtoys', type: 'VST2', category: 'Distortion', isEnabled: false, latency: 0 },
-    { id: 'v6', name: 'RC-20 Retro Color', vendor: 'XLN Audio', type: 'VST3', category: 'FX', isEnabled: true, latency: 0 },
+    { id: 'v1', name: 'Lead Synth', vendor: 'Built-in', type: 'VST3', category: 'Synth', isEnabled: true, latency: 0 },
+    { id: 'v2', name: 'Parametric EQ', vendor: 'Built-in', type: 'VST3', category: 'EQ', isEnabled: true, latency: 12 },
+    { id: 'v3', name: 'Vintage Reverb', vendor: 'Built-in', type: 'VST2', category: 'Reverb', isEnabled: true, latency: 0 },
+    { id: 'v4', name: 'Atmosphere Pad', vendor: 'Built-in', type: 'VST3', category: 'Synth', isEnabled: true, latency: 0 },
+    { id: 'v5', name: 'Tape Saturator', vendor: 'Built-in', type: 'VST2', category: 'Distortion', isEnabled: false, latency: 0 },
+    { id: 'v6', name: 'Retro Color', vendor: 'Built-in', type: 'VST3', category: 'FX', isEnabled: true, latency: 0 },
   ]);
 
   const handleScan = () => {

@@ -78,7 +78,7 @@ export function WaveformVisualizer() {
           </select>
           <div className="relative group">
             <button className="flex items-center gap-1.5 px-2.5 py-1 bg-brand hover:opacity-90 text-white rounded-md font-bold text-[9px] uppercase transition-all shadow-md shadow-brand/20">
-              <Plus size={9} /> Load MPC
+              <Plus size={9} /> Load Kit
             </button>
             <div className="absolute right-0 top-full mt-1.5 w-36 bg-bg-surface border border-border-main rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-1.5 flex flex-col gap-0.5">
               <button className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-bg-main/80 rounded-md text-[9px] text-neutral-300 transition-colors text-left">
@@ -112,7 +112,7 @@ export function WaveformVisualizer() {
           ))}
           <div className="h-3 w-px bg-border-main mx-1"></div>
           <button className="flex items-center gap-1.5 px-2.5 py-0.5 bg-bg-surface hover:bg-bg-main text-red-400 text-[9px] font-bold uppercase rounded-md border border-red-900/30 transition-colors">
-            <Zap size={9} /> Demucs
+            <Zap size={9} /> Separate
           </button>
           <span className="ml-auto text-[8px] font-mono text-neutral-600 italic uppercase">Cuts sync across stems</span>
         </div>
@@ -165,7 +165,7 @@ export function WaveformVisualizer() {
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-2">
               <UploadCloud className="w-7 h-7 text-neutral-600 opacity-50" />
               <span className="text-[11px] font-bold font-mono text-neutral-600 uppercase tracking-widest">Drop Audio Loop</span>
-              <span className="text-[9px] font-mono text-neutral-700 uppercase">or click Load MPC above</span>
+              <span className="text-[9px] font-mono text-neutral-700 uppercase">or click Load Kit above</span>
             </div>
           )}
 

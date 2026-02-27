@@ -162,7 +162,7 @@ export function SettingsView() {
         <div className="bg-black/60 rounded-lg border border-neutral-800 p-4 font-mono text-[10px] text-neutral-500 h-32 overflow-y-auto custom-scrollbar">
           <div className="flex gap-4"><span className="text-neutral-700">[02:56:39]</span> <span className="text-emerald-700">INFO:</span> Audio engine initialized successfully.</div>
           <div className="flex gap-4"><span className="text-neutral-700">[02:56:40]</span> <span className="text-emerald-700">INFO:</span> ASIO v2.0 driver loaded. Buffer: 128 samples.</div>
-          <div className="flex gap-4"><span className="text-neutral-700">[02:56:42]</span> <span className="text-blue-700">DEBUG:</span> MIDI device 'OmniKey 49' connected.</div>
+          <div className="flex gap-4"><span className="text-neutral-700">[02:56:42]</span> <span className="text-blue-700">DEBUG:</span> MIDI device 'TBM Controller 49' connected.</div>
           <div className="flex gap-4"><span className="text-neutral-700">[02:56:45]</span> <span className="text-emerald-700">INFO:</span> Sample map 'Factory_808_Kit' loaded.</div>
           <div className="flex gap-4"><span className="text-neutral-700">[03:26:32]</span> <span className="text-yellow-700">WARN:</span> High DSP load detected on Track 4.</div>
           <div className="flex gap-4"><span className="text-neutral-700">[03:26:35]</span> <span className="text-emerald-700">INFO:</span> Modulation Matrix updated. 3 active routes.</div>

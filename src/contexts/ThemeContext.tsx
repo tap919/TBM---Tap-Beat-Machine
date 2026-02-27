@@ -5,6 +5,8 @@ export type Theme = {
   name: string;
   primary: string;
   primaryGlow: string;
+  indicator: string;
+  indicatorGlow: string;
   bg: string;
   surface: string;
   border: string;
@@ -13,20 +15,24 @@ export type Theme = {
 
 export const themes: Theme[] = [
   {
-    id: 'mpc-classic',
-    name: 'MPC Classic',
-    primary: '#ef4444', // red-500
-    primaryGlow: 'rgba(239, 68, 68, 0.2)',
-    bg: '#0a0a0a',
-    surface: '#171717',
-    border: '#262626',
-    text: '#e5e5e5'
+    id: 'tbm-default',
+    name: 'TBM Default',
+    primary: '#FFC72C', // McDonald's yellow
+    primaryGlow: 'rgba(255, 199, 44, 0.2)',
+    indicator: '#39FF14', // neon green
+    indicatorGlow: 'rgba(57, 255, 20, 0.3)',
+    bg: '#001529', // navy blue
+    surface: '#002244',
+    border: '#003366',
+    text: '#FFFFFF'
   },
   {
     id: 'techno-blue',
     name: 'Techno Blue',
-    primary: '#3b82f6', // blue-500
+    primary: '#3b82f6',
     primaryGlow: 'rgba(59, 130, 246, 0.2)',
+    indicator: '#39FF14',
+    indicatorGlow: 'rgba(57, 255, 20, 0.3)',
     bg: '#020617',
     surface: '#0f172a',
     border: '#1e293b',
@@ -35,8 +41,10 @@ export const themes: Theme[] = [
   {
     id: 'acid-green',
     name: 'Acid Green',
-    primary: '#22c55e', // green-500
+    primary: '#22c55e',
     primaryGlow: 'rgba(34, 197, 94, 0.2)',
+    indicator: '#39FF14',
+    indicatorGlow: 'rgba(57, 255, 20, 0.3)',
     bg: '#050505',
     surface: '#0a0a0a',
     border: '#1a1a1a',
@@ -45,8 +53,10 @@ export const themes: Theme[] = [
   {
     id: 'cyber-purple',
     name: 'Cyber Purple',
-    primary: '#a855f7', // purple-500
+    primary: '#a855f7',
     primaryGlow: 'rgba(168, 85, 247, 0.2)',
+    indicator: '#39FF14',
+    indicatorGlow: 'rgba(57, 255, 20, 0.3)',
     bg: '#0c0414',
     surface: '#1a0b2e',
     border: '#2d1b4d',
@@ -55,8 +65,10 @@ export const themes: Theme[] = [
   {
     id: 'gold-standard',
     name: 'Gold Standard',
-    primary: '#eab308', // yellow-500
+    primary: '#eab308',
     primaryGlow: 'rgba(234, 179, 8, 0.2)',
+    indicator: '#39FF14',
+    indicatorGlow: 'rgba(57, 255, 20, 0.3)',
     bg: '#0c0a09',
     surface: '#1c1917',
     border: '#292524',
@@ -74,7 +86,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentThemeId, setCurrentThemeId] = useState('mpc-classic');
+  const [currentThemeId, setCurrentThemeId] = useState('tbm-default');
   const [customTheme, setCustomTheme] = useState<Theme>({
     ...themes[0],
     id: 'custom',
@@ -87,6 +99,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     root.style.setProperty('--brand-primary', currentTheme.primary);
     root.style.setProperty('--brand-primary-glow', currentTheme.primaryGlow);
+    root.style.setProperty('--indicator', currentTheme.indicator);
+    root.style.setProperty('--indicator-glow', currentTheme.indicatorGlow);
     root.style.setProperty('--bg-main', currentTheme.bg);
     root.style.setProperty('--bg-surface', currentTheme.surface);
     root.style.setProperty('--border-main', currentTheme.border);

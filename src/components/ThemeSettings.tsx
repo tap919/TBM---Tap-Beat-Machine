@@ -18,7 +18,7 @@ export function ThemeSettings() {
           </div>
         </div>
         <button 
-          onClick={() => setTheme('mpc-classic')}
+          onClick={() => setTheme('tbm-default')}
           className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded text-[10px] font-bold uppercase transition-all"
         >
           <RotateCcw size={12} /> Reset to Default

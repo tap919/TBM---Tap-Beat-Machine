@@ -1,5 +1,5 @@
 import React from 'react';
-import { Waves, Music, Sliders, Settings, Save, FolderOpen, Grid3X3, Activity, Library, Cpu, Palette, Piano, Users } from 'lucide-react';
+import { Waves, Music, Sliders, Settings, Save, FolderOpen, Grid3X3, Activity, Library, Cpu, Palette, Piano, Users, Disc3 } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -19,6 +19,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: 'chords',     icon: <Music size={17} />,    label: 'Chords'   },
     { id: 'mod',        icon: <Activity size={17} />, label: 'Mod'      },
     { id: 'mixer',      icon: <Sliders size={17} />,  label: 'Mixer'    },
+    { id: 'vinyl',      icon: <Disc3 size={17} />,    label: 'Vinyl'    },
     { id: 'settings',   icon: <Settings size={17} />, label: 'Settings' },
   ];
 
