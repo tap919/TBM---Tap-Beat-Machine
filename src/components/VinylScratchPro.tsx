@@ -12,6 +12,7 @@ import {
   Repeat,
   Scissors,
   UploadCloud,
+  ListMusic,
 } from 'lucide-react';
 
 type ScratchStyle = {
@@ -48,7 +49,7 @@ const difficultyColors: Record<string, string> = {
 };
 
 export function VinylScratchPro() {
-  const [activeMode, setActiveMode] = useState<'auto' | 'live' | 'editor'>('auto');
+  const [activeMode, setActiveMode] = useState<'auto' | 'live' | 'editor' | 'turntable' | 'minorvdj'>('auto');
   const [selectedStyle, setSelectedStyle] = useState('baby');
   const [selectedSample, setSelectedSample] = useState('ah_yeah1');
   const [intensity, setIntensity] = useState<'low' | 'medium' | 'high'>('medium');
@@ -61,6 +62,10 @@ export function VinylScratchPro() {
   const [friction, setFriction] = useState(85);
   const [vinylNoise, setVinylNoise] = useState(30);
   const [pitchDrift, setPitchDrift] = useState(15);
+  const [sampleThroughTurntable, setSampleThroughTurntable] = useState(true);
+  const [drive, setDrive] = useState(38);
+  const [wear, setWear] = useState(22);
+  const [crackle, setCrackle] = useState(28);
 
   // Fader
   const [faderPosition, setFaderPosition] = useState(100);
@@ -69,6 +74,20 @@ export function VinylScratchPro() {
   // Effects
   const [echoWet, setEchoWet] = useState(30);
   const [reverbWet, setReverbWet] = useState(15);
+  const [lofiTone, setLofiTone] = useState(40);
+
+  // Minimal mixer
+  const [deckALevel, setDeckALevel] = useState(72);
+  const [deckBLevel, setDeckBLevel] = useState(68);
+  const [masterLevel, setMasterLevel] = useState(85);
+
+  // MinorVDJ
+  const [autoDj, setAutoDj] = useState(false);
+  const [playlistCursor, setPlaylistCursor] = useState(0);
+  const playlist = useMemo(
+    () => ['ah_yeah1', 'fresh', 'yeah_boy', 'one_two', 'what', 'baby_base'],
+    []
+  );
 
   const [isDragging, setIsDragging] = useState(false);
 
@@ -87,6 +106,19 @@ export function VinylScratchPro() {
       if (autoScratchTimer.current !== null) clearTimeout(autoScratchTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!autoDj || activeMode !== 'minorvdj') return;
+    const timer = setInterval(() => {
+      setPlaylistCursor(prev => (prev + 1) % playlist.length);
+      setSelectedSample(prev => {
+        const currentIndex = playlist.indexOf(prev);
+        const nextIndex = (currentIndex + 1) % playlist.length;
+        return playlist[nextIndex];
+      });
+    }, Math.max(2500, Math.round((60 / Math.max(1, bpm)) * 16 * 1000)));
+    return () => clearInterval(timer);
+  }, [activeMode, autoDj, bpm, playlist]);
 
   const handleAutoScratch = useCallback(() => {
     setIsPlaying(true);
@@ -110,7 +142,7 @@ export function VinylScratchPro() {
         <div className="flex items-center gap-3">
           {/* Mode selector */}
           <div className="flex items-center gap-0.5 bg-bg-main/60 rounded-lg px-1 py-0.5 border border-border-main">
-            {(['auto', 'live', 'editor'] as const).map(mode => (
+            {(['auto', 'live', 'editor', 'turntable', 'minorvdj'] as const).map(mode => (
               <button
                 key={mode}
                 onClick={() => setActiveMode(mode)}
@@ -294,6 +326,15 @@ export function VinylScratchPro() {
                 <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Sample Library</span>
               </div>
               <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1.5 text-[9px] font-bold text-neutral-500 uppercase">
+                  <input
+                    type="checkbox"
+                    checked={sampleThroughTurntable}
+                    onChange={e => setSampleThroughTurntable(e.target.checked)}
+                    className="accent-brand"
+                  />
+                  Through Turntable
+                </label>
                 <select
                   value={selectedSample}
                   onChange={e => setSelectedSample(e.target.value)}
@@ -353,6 +394,33 @@ export function VinylScratchPro() {
                 <span className="ml-auto text-[9px] font-mono text-neutral-600 uppercase">
                   Sample: {currentSample?.name}
                 </span>
+                {sampleThroughTurntable && (
+                  <span className="text-[8px] font-mono text-indicator uppercase">Turntable ON</span>
+                )}
+              </div>
+            )}
+
+            {activeMode === 'minorvdj' && (
+              <div className="bg-bg-main/60 rounded-lg border border-border-main p-3 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">MinorVDJ</span>
+                  <button
+                    onClick={() => setAutoDj(!autoDj)}
+                    className={`px-2 py-1 rounded text-[9px] font-bold uppercase border transition-colors ${
+                      autoDj ? 'text-indicator border-indicator/50 bg-indicator/10' : 'text-neutral-400 border-border-main bg-bg-main'
+                    }`}
+                  >
+                    Auto DJ {autoDj ? 'On' : 'Off'}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[9px] font-mono uppercase">
+                  <div className="bg-bg-main/70 border border-border-main rounded p-2 text-neutral-400">
+                    Deck A: {builtInSamples.find(s => s.id === playlist[playlistCursor])?.name}
+                  </div>
+                  <div className="bg-bg-main/70 border border-border-main rounded p-2 text-neutral-400">
+                    Deck B: {builtInSamples.find(s => s.id === playlist[(playlistCursor + 1) % playlist.length])?.name}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -362,7 +430,7 @@ export function VinylScratchPro() {
         <div className="w-52 flex flex-col gap-4 flex-shrink-0">
           {/* Vinyl Simulation */}
           <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex flex-col gap-3">
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Vinyl Simulation</span>
+            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Turntable Emulation</span>
             <div className="grid grid-cols-2 gap-y-4 gap-x-2 place-items-center">
               <Knob label="Inertia" value={inertia} onChange={setInertia} color="#FFC72C" />
               <Knob label="Friction" value={friction} onChange={setFriction} color="#FFC72C" />
@@ -373,10 +441,26 @@ export function VinylScratchPro() {
 
           {/* Effects */}
           <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex flex-col gap-3">
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">FX Rack</span>
+            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Sonic Degradation FX</span>
             <div className="grid grid-cols-2 gap-y-4 gap-x-2 place-items-center">
               <Knob label="Echo" value={echoWet} onChange={setEchoWet} color="#3b82f6" />
               <Knob label="Reverb" value={reverbWet} onChange={setReverbWet} color="#3b82f6" />
+              <Knob label="Drive" value={drive} onChange={setDrive} color="#f97316" />
+              <Knob label="Wear" value={wear} onChange={setWear} color="#f97316" />
+              <Knob label="Crackle" value={crackle} onChange={setCrackle} color="#f97316" />
+              <Knob label="Lo-Fi" value={lofiTone} onChange={setLofiTone} color="#f97316" />
+            </div>
+          </div>
+
+          <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <ListMusic size={12} className="text-brand" />
+              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Minimal Mixer</span>
+            </div>
+            <div className="flex flex-col gap-2 text-[9px] font-mono text-neutral-500 uppercase">
+              <label className="flex items-center gap-2">Deck A <input type="range" min="0" max="100" value={deckALevel} onChange={e => setDeckALevel(parseInt(e.target.value))} className="flex-1 accent-brand" /></label>
+              <label className="flex items-center gap-2">Deck B <input type="range" min="0" max="100" value={deckBLevel} onChange={e => setDeckBLevel(parseInt(e.target.value))} className="flex-1 accent-brand" /></label>
+              <label className="flex items-center gap-2">Master <input type="range" min="0" max="100" value={masterLevel} onChange={e => setMasterLevel(parseInt(e.target.value))} className="flex-1 accent-brand" /></label>
             </div>
           </div>
 
