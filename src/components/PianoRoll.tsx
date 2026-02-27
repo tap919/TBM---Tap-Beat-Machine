@@ -477,7 +477,7 @@ export function PianoRoll() {
         </div>
       </div>
 
-      {/* Song mode: sequence selector strip */}
+      {/* Track mode: sequence selector strip */}
       {mode === 'track' && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 border-b border-neutral-800 bg-neutral-950/40 flex-shrink-0 overflow-x-auto custom-scrollbar">
           <AlignLeft size={11} className="text-neutral-600 flex-shrink-0" />
