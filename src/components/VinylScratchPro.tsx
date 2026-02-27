@@ -343,13 +343,30 @@ export function VinylScratchPro({ onSendToSampleEditor }: { onSendToSampleEditor
     }
   }, []);
 
+  const syncTimeoutRef = useRef<number | null>(null);
+
   // MinorVDJ sync
   const handleSync = useCallback(() => {
     setSyncEnabled(true);
     setDeckBBpm(deckABpm);
-    setTimeout(() => setSyncEnabled(false), 500);
+
+    if (syncTimeoutRef.current !== null) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    syncTimeoutRef.current = window.setTimeout(() => {
+      setSyncEnabled(false);
+      syncTimeoutRef.current = null;
+    }, 500);
   }, [deckABpm]);
 
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current !== null) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
   // Grid columns from patternLengthBars + resolution
   const gridDivisions = useMemo(() => {
     const divPerBeat: Record<string, number> = { '8n': 2, '16n': 4, '32n': 8 };
