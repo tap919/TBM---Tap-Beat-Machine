@@ -230,10 +230,12 @@ const router = Router();
  * Returns whether demucs is installed and which models are cached.
  */
 router.get('/health', async (_req, res) => {
-  const installed = await new Promise<boolean>((resolve) => {
+  const health = await new Promise<{ installed: boolean; error?: string }>((resolve) => {
     const proc = spawn(PYTHON, ['-m', 'demucs', '--help'], { stdio: 'ignore' });
     let settled = false;
+    let failureReason: string | undefined;
     const timeoutId = setTimeout(() => {
+      failureReason = 'timeout';
       console.warn(`Demucs health check timed out after ${HEALTH_CHECK_TIMEOUT_MS}ms`);
       proc.kill('SIGTERM');
       finish(false);
@@ -241,16 +243,27 @@ router.get('/health', async (_req, res) => {
     function finish(value: boolean) {
       if (settled) return;
       settled = true;
+      if (!value && !failureReason) {
+        failureReason = 'exit';
+      }
       if (proc.exitCode === null && proc.pid) {
         proc.kill('SIGTERM');
       }
       clearTimeout(timeoutId);
       proc.removeAllListeners('error');
       proc.removeAllListeners('close');
-      resolve(value);
+      resolve({ installed: value, error: failureReason });
     }
-    proc.once('error', () => finish(false));
-    proc.once('close', (code) => finish(code === 0));
+    proc.once('error', () => {
+      failureReason = 'spawn_error';
+      finish(false);
+    });
+    proc.once('close', (code) => {
+      if (code !== 0 && !failureReason) {
+        failureReason = `exit_${code ?? 'unknown'}`;
+      }
+      finish(code === 0);
+    });
   });
 
   // Check torch hub cache for .th files (demucs model weights)
@@ -265,10 +278,11 @@ router.get('/health', async (_req, res) => {
   } catch { /* cache dir may not exist yet */ }
 
   res.json({
-    installed,
+    installed: health.installed,
     python: PYTHON,
     cachedModels: [...new Set(cachedModels)],
     modelsDir: torchCacheDir,
+    healthError: health.error,
   });
 });
 
@@ -359,6 +373,7 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
   res.setHeader('Accept-Ranges', 'bytes');
   const stream = fs.createReadStream(stemFile);
   stream.on('error', (err) => {
+    console.warn('Stem stream failed', err);
     if (!res.headersSent) {
       const errWithCode = err as NodeJS.ErrnoException;
       if (errWithCode.code === 'ENOENT') {
