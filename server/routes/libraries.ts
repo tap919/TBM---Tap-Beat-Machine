@@ -45,13 +45,21 @@ router.patch('/:id', (req, res) => {
     res.status(400).json({ error: 'isFavorite (boolean) is required' });
     return;
   }
-  db.prepare('UPDATE libraries SET is_favorite = ? WHERE id = ?').run(isFavorite ? 1 : 0, req.params.id);
+  const result = db.prepare('UPDATE libraries SET is_favorite = ? WHERE id = ?').run(isFavorite ? 1 : 0, req.params.id);
+  if (result.changes === 0) {
+    res.status(404).json({ error: 'Library not found' });
+    return;
+  }
   res.json({ ok: true });
 });
 
 // ── DELETE /api/libraries/:id ─────────────────────────────────────────────────
 router.delete('/:id', (req, res) => {
-  db.prepare('DELETE FROM libraries WHERE id = ?').run(req.params.id);
+  const result = db.prepare('DELETE FROM libraries WHERE id = ?').run(req.params.id);
+  if (result.changes === 0) {
+    res.status(404).json({ error: 'Library not found' });
+    return;
+  }
   res.json({ ok: true });
 });
 

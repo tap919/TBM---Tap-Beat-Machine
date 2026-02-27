@@ -125,7 +125,7 @@ function makeDefaultArrangement(sequences: Sequence[]): ArrangementCell[][] {
 }
 
 // ─── TrackView ────────────────────────────────────────────────────────────────
-function TrackView({ tracks, zoom }: { tracks: Track[]; zoom: number }) {
+function TrackView({ tracks, bars, zoom }: { tracks: Track[]; bars: number; zoom: number }) {
   const [activeTrack, setActiveTrack] = useState(0);
   const [tool, setTool] = useState<'pencil' | 'select'>('pencil');
   const [localTracks, setLocalTracks] = useState<Track[]>(tracks);
@@ -156,7 +156,7 @@ function TrackView({ tracks, zoom }: { tracks: Track[]; zoom: number }) {
   }, [tool, beatWidth]);
 
   const currentTrack = localTracks.find(t => t.id === activeTrack) ?? localTracks[0];
-  const totalBars = (currentTrack as any)?.bars ?? 4;
+  const totalBars = bars;
   const totalBeats = totalBars * BEATS_PER_BAR;
   const gridWidth = totalBeats * beatWidth;
 
@@ -510,7 +510,7 @@ export function PianoRoll() {
       {/* Content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {mode === 'track' ? (
-          <TrackView tracks={activeSequence.tracks} zoom={zoom} />
+          <TrackView tracks={activeSequence.tracks} bars={activeSequence.bars} zoom={zoom} />
         ) : (
           <SongMode sequences={sequences} />
         )}

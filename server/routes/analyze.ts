@@ -34,6 +34,18 @@ router.post('/', async (req, res) => {
 
   const { genre = 'Hip-Hop', style = 'comping', rhythm = 'swing', notation = 'Diatonic' } = req.body as Record<string, string>;
 
+  // Validate field lengths to prevent prompt injection / oversized requests
+  const MAX_LEN = 100;
+  if (
+    typeof genre !== 'string' || genre.length > MAX_LEN ||
+    typeof style !== 'string' || style.length > MAX_LEN ||
+    typeof rhythm !== 'string' || rhythm.length > MAX_LEN ||
+    typeof notation !== 'string' || notation.length > MAX_LEN
+  ) {
+    res.status(400).json({ error: 'Invalid request: fields must be strings of at most 100 characters' });
+    return;
+  }
+
   const prompt = ANALYSIS_PROMPT
     .replace('{genre}', genre)
     .replace('{style}', style)
