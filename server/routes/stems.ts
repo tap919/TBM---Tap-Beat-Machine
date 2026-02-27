@@ -346,16 +346,20 @@ router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) =>
   res.setHeader('Content-Type', 'audio/mpeg');
   res.setHeader('Content-Disposition', `attachment; filename="${stemName}.mp3"`);
   res.setHeader('Accept-Ranges', 'bytes');
+  let streaming = false;
   const stream = fs.createReadStream(stemFile);
+  stream.once('open', () => {
+    streaming = true;
+    stream.pipe(res);
+  });
   stream.on('error', (err) => {
     stream.destroy();
-    if (!res.headersSent) {
+    if (!streaming || !res.headersSent) {
       res.status(500).json({ error: 'Failed to stream stem file' });
       return;
     }
     res.destroy(err);
   });
-  stream.pipe(res);
 });
 
 // ── Multer error handler ──────────────────────────────────────────────────────
