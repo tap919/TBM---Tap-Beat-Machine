@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  Brain, Play, Square, Plus, Minus, ChevronRight,
+  Brain, Play, Square, ChevronRight,
   Music, Mic2, Piano, Guitar, AudioLines, Drum,
   Sparkles, RefreshCw, Volume2, VolumeX, Sliders
 } from 'lucide-react';
