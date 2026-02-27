@@ -352,7 +352,7 @@ router.get('/jobs/:jobId', (req: Request, res: Response) => {
  * GET /api/stems/jobs/:jobId/download/:stem
  * Streams the separated stem audio file.
  */
-router.get('/jobs/:jobId/download/:stem', async (req: Request, res: Response) => {
+router.get('/jobs/:jobId/download/:stem', (req: Request, res: Response) => {
   const job = jobs.get(req.params.jobId);
   if (!job) { res.status(404).json({ error: 'Job not found' }); return; }
   if (job.status !== 'done') { res.status(409).json({ error: 'Job not complete' }); return; }
