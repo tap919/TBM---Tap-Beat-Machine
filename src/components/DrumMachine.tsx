@@ -44,7 +44,7 @@ interface TrackSettings {
   filterType: FilterType;
   filterCutoff: number;    // 0–127
   filterResonance: number; // 0–127
-  swing: number;           // 0–100 per-track swing
+  swing: number;           // 0 = fallback to global swing, 1–100 = per-track swing amount
   muted: boolean;
   solo: boolean;
 }
