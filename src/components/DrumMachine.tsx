@@ -101,17 +101,21 @@ export function DrumMachine() {
   };
 
   const pads = Array.from({ length: 16 }, (_, i) => {
-    const trackId = i; // pads map to tracks 0-15 in bank A
-    const settings = trackSettings[trackId];
-    const chokeColor = settings.chokeGroup !== null ? CHOKE_COLORS[settings.chokeGroup] : null;
+    // Make pad → track mapping bank-aware: each bank exposes a different set of 16 tracks
+    const globalTrackIndex = activePadBank * 16 + i;
+    const settings = trackSettings[globalTrackIndex];
+    const chokeColor =
+      settings && settings.chokeGroup !== null && settings.chokeGroup !== undefined
+        ? CHOKE_COLORS[settings.chokeGroup]
+        : null;
     return {
       id: i,
-      trackId,
-      label: TRACK_NAMES[i] ?? `Pad ${i + 1}`,
+      trackId: globalTrackIndex,
+      label: TRACK_NAMES[globalTrackIndex] ?? `Pad ${globalTrackIndex + 1}`,
       color: i < 4 ? '#FF4C4C' : i < 8 ? '#4C83FF' : i < 12 ? '#FFD700' : '#00FF00',
       chokeColor,
-      chokeGroup: settings.chokeGroup,
-      filterType: settings.filterType,
+      chokeGroup: settings?.chokeGroup ?? null,
+      filterType: settings?.filterType,
     };
   });
 
