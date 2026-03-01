@@ -459,7 +459,7 @@ export function DrumMachine() {
                   </div>
                   {activeSettings.chokeGroup !== null && (
                     <p className="text-[8px] text-neutral-600 font-mono leading-tight">
-                      Triggering this pad stops all other pads in group {activeSettings.chokeGroup}.
+                      Assign this pad to choke group {activeSettings.chokeGroup} for use by playback/trigger logic.
                     </p>
                   )}
                 </div>
