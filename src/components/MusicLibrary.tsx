@@ -174,7 +174,7 @@ export function MusicLibrary({ onLoadDeckA, onLoadDeckB }: MusicLibraryProps) {
     try {
       setError(null);
       await startMusicScan();
-      setScanStatus({ scanning: true, total: 0, processed: 0, errors: 0, currentFile: '', startedAt: new Date().toISOString() });
+      setScanStatus({ scanning: true, progress: 0, total: 0, processed: 0, errors: 0, currentFile: '', filesFound: 0, startedAt: new Date().toISOString() });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start scan');
     }
@@ -207,7 +207,7 @@ export function MusicLibrary({ onLoadDeckA, onLoadDeckB }: MusicLibraryProps) {
         // Ignore results if this request was aborted
         if (controller.signal.aborted) return;
         setSearchResults(res.results);
-        setSearchMode(res.mode);
+        setSearchMode(res.mode as 'semantic' | 'text' | null);
       } catch (_err) {
         if (controller.signal.aborted) return;
         setSearchResults([]);
@@ -323,7 +323,7 @@ export function MusicLibrary({ onLoadDeckA, onLoadDeckB }: MusicLibraryProps) {
     : viewMode === 'playlists' ? playlistTracks
     : tracks;
 
-  const genres = useMemo(() => stats?.genres ?? [], [stats]);
+  const genres = useMemo(() => Object.keys(stats?.genres ?? {}), [stats]);
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
@@ -435,7 +435,7 @@ export function MusicLibrary({ onLoadDeckA, onLoadDeckB }: MusicLibraryProps) {
               className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-xs"
             >
               <option value="">All</option>
-              {genres.map(g => <option key={g} value={g}>{g}</option>)}
+              {genres.map((g: string) => <option key={g} value={g}>{g}</option>)}
             </select>
           </div>
           <div className="flex items-center gap-2">

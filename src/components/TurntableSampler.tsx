@@ -695,7 +695,7 @@ export function TurntableSampler({ onGoToDrums }: TurntableSamplerProps = {}) {
           return;
         }
         try {
-          const status = await getStemJob(job.jobId);
+          const status = await getStemJob(job.id);
           if (!mountedRef.current) return;
           setStemState((prev) => ({
             ...prev,
@@ -718,7 +718,7 @@ export function TurntableSampler({ onGoToDrums }: TurntableSamplerProps = {}) {
             const programs: StemProgram[] = [];
 
             for (let si = 0; si < stemNames.length && si < 4; si++) {
-              const url = stemDownloadUrl(job.jobId, stemNames[si]);
+              const url = stemDownloadUrl(job.id, stemNames[si]);
               const resp = await fetch(url);
               const arrayBuf = await resp.arrayBuffer();
               const stemBuffer = await audioContext.decodeAudioData(arrayBuf);

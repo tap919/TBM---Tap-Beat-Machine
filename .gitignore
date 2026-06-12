@@ -11,3 +11,19 @@ __pycache__/
 data/*.db
 data/*.db-shm
 data/*.db-wal
+
+# Environment
+.env
+
+# Build artifacts
+lint-results.json
+*.log
+native/build/
+
+# Runtime data (uploads, stems)
+data/uploads/
+data/stems/
+
+# Scratchpads / internal docs
+gemini-slate-4-manual.txt
+FINAL_AUDIT.md

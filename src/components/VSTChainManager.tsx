@@ -243,7 +243,7 @@ export function VSTChainManager() {
           id: generateId(),
           pluginId: plugin.id,
           pluginName: plugin.name,
-          pluginPath: plugin.path,
+          pluginPath: plugin.path ?? undefined,
           bypass: false,
           parameters: {},
         }],

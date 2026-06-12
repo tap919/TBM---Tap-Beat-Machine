@@ -23,7 +23,7 @@ export default defineConfig(() => {
             'vendor-react': ['react', 'react-dom'],
             'vendor-icons': ['lucide-react'],
             // Heavy app modules — lazy loaded via React.lazy
-            'audio-engine': ['./src/lib/TBMAudioEngine.ts'],
+            'audio-engine': ['./src/engine/TBMAudioEngine.ts'],
           },
         },
       },

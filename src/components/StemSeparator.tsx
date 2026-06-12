@@ -208,11 +208,11 @@ export function StemSeparator() {
 
     try {
       const job = await separateStems(file, model);
-      setJobId(job.jobId);
+      setJobId(job.id);
       setStatus('separating');
       setProgress(2);
       setPhase('Starting Demucs…');
-      startPolling(job.jobId);
+      startPolling(job.id);
     } catch (err) {
       setErrorMsg((err as Error).message);
       setStatus('error');

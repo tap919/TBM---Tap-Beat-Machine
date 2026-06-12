@@ -5,26 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import {
-  Repeat,
-  Layers,
-  Music,
-  Clock,
-  Plus,
-  Download,
-  Trash2,
-  Copy,
-  ClipboardPaste,
-  Activity,
-  FileCode,
-  Filter,
-  Link2,
-  SlidersHorizontal,
-  Upload,
-  CheckCircle2,
-  Keyboard,
-  Ban,
-} from "lucide-react";
+import { Activity, CheckCircle2 } from "lucide-react";
 
 import { useTBMAudio } from "../contexts/TBMAudioContext";
 import type { Pad } from "../lib/TBMAudioEngine";
@@ -32,6 +13,11 @@ import { TRACK_NAMES, STORAGE_KEYS } from "../lib/constants";
 import { MPCTransport } from "./ui/MPCTransport";
 import { TrackStatusBar } from "./ui/TrackStatusBar";
 import type { TrackContentType } from "../lib/trackRouter";
+import { PadGrid } from "./PadGrid";
+import { TrackDetailPanel } from "./TrackDetailPanel";
+import { StepSequencerGrid } from "./StepSequencerGrid";
+import { AutomationLane } from "./AutomationLane";
+import { DrumQuickActions } from "./DrumQuickActions";
 
 // Default drum pattern: track index → set of active step indices (0-15)
 const DEFAULT_PATTERN: Record<number, number[]> = {
@@ -196,79 +182,7 @@ function applyQuantize(
   return result;
 }
 
-// ── Memoized step cell to avoid re-rendering all 256 cells on any toggle ──
-const StepCell = React.memo(function StepCell({
-  trackId,
-  step,
-  isActive,
-  trackColor,
-  isCurrent,
-  onToggle,
-  stepCount,
-  velocity,
-  showVelocity,
-}: {
-  trackId: number;
-  step: number;
-  isActive: boolean;
-  trackColor: string;
-  isCurrent: boolean;
-  onToggle: (trackId: number, step: number) => void;
-  stepCount: 16 | 32 | 64;
-  velocity?: number;
-  showVelocity?: boolean;
-}) {
-  const handleClick = useCallback(
-    () => onToggle(trackId, step),
-    [onToggle, trackId, step],
-  );
-  const isBeat = step % 4 === 0;
-  const isBar = step % 16 === 0;
-  const vel = velocity ?? 1;
-  return (
-    <div
-      className={`absolute h-full cursor-pointer transition-colors ${isCurrent ? "step-playhead" : ""}`}
-      style={{
-        left: `${step * (100 / stepCount)}%`,
-        width: `${100 / stepCount}%`,
-        backgroundColor: isActive
-          ? trackColor + (isCurrent ? "60" : "40")
-          : isBeat
-            ? "rgba(255,255,255,0.015)"
-            : undefined,
-        borderLeft: isActive
-          ? `1px solid ${trackColor}`
-          : isBar
-            ? "1px solid rgba(255,255,255,0.06)"
-            : isBeat
-              ? "1px solid rgba(255,255,255,0.03)"
-              : undefined,
-      }}
-      onClick={handleClick}
-    >
-      {/* FL-style velocity bar at bottom */}
-      {isActive && showVelocity && (
-        <div
-          className="absolute bottom-0 left-[1px] right-[1px] velocity-bar rounded-t-sm"
-          style={{
-            height: `${vel * 100}%`,
-            backgroundColor: trackColor + "70",
-            borderTop: `1px solid ${trackColor}`,
-          }}
-        />
-      )}
-    </div>
-  );
-}, (prev, next) => 
-  prev.isActive === next.isActive && 
-  prev.isCurrent === next.isCurrent &&
-  prev.trackId === next.trackId &&
-  prev.step === next.step &&
-  prev.trackColor === next.trackColor &&
-  prev.stepCount === next.stepCount &&
-  prev.velocity === next.velocity &&
-  prev.showVelocity === next.showVelocity
-);
+
 
 export function DrumMachine() {
   const [activeTrack, setActiveTrack] = useState(0);
@@ -1174,805 +1088,106 @@ export function DrumMachine() {
       {/* ── Track Channel Status ── */}
       <TrackStatusBar compact />
 
-      {/* ── Quick Actions Bar ── */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setPreCount(!preCount)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded text-[13px] font-bold uppercase transition-all border ${
-              preCount
-                ? "bg-blue-600/20 text-blue-400 border-blue-500/50"
-                : "bg-neutral-800 text-neutral-500 border-neutral-700"
-            }`}
-          >
-            <Clock size={12} /> Pre-Count
-          </button>
-
-          {/* Record Mode: Record / Overdub */}
-          <div className="flex items-center gap-1 bg-neutral-800 rounded border border-neutral-700 p-0.5">
-            <button
-              onClick={() => setRecordMode("record")}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold uppercase transition-all ${
-                recordMode === "record"
-                  ? "bg-red-600 text-white shadow-sm"
-                  : "text-neutral-500 hover:text-neutral-300"
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-              Record
-            </button>
-            <button
-              onClick={() => setRecordMode("overdub")}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold uppercase transition-all ${
-                recordMode === "overdub"
-                  ? "bg-amber-600 text-white shadow-sm"
-                  : "text-neutral-500 hover:text-neutral-300"
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-              Overdub
-            </button>
-          </div>
-
-          {/* Global Swing */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-neutral-600 uppercase">Swing</span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={1}
-              value={globalSwing}
-              aria-label="Global Swing"
-              onChange={(e) => {
-                const n = parseInt(e.target.value, 10);
-                if (!Number.isNaN(n)) setGlobalSwing(n);
-              }}
-              className="w-24 h-1 bg-neutral-800 appearance-none accent-red-500"
-            />
-            <span className="text-[13px] font-mono text-neutral-400 min-w-10">{globalSwing}%</span>
-          </div>
-
-          {/* Quantize Controls */}
-          <div className="flex items-center gap-2 border-l border-neutral-800 pl-3">
-            <button
-              onClick={handleQuantize}
-              disabled={quantizeStrength <= 0}
-              className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold uppercase bg-cyan-600/20 text-cyan-400 border border-cyan-500/40 hover:bg-cyan-600/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <Activity size={11} /> Quantize
-            </button>
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] font-mono text-neutral-600">Str</span>
-              <input
-                type="range"
-                min={1}
-                max={100}
-                step={1}
-                value={quantizeStrength}
-                onChange={(e) => setQuantizeStrength(parseInt(e.target.value, 10))}
-                className="w-16 h-1 bg-neutral-800 appearance-none accent-cyan-500"
-              />
-              <span className="text-[11px] font-mono text-neutral-400 w-6">{quantizeStrength}</span>
-            </div>
-            <div className="flex bg-neutral-800 rounded p-0.5 border border-neutral-700">
-              {([4, 8, 16, 32] as const).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setQuantizeGrid(g)}
-                  className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition-all ${
-                    quantizeGrid === g
-                      ? "bg-cyan-600 text-white"
-                      : "text-neutral-500 hover:text-neutral-300"
-                  }`}
-                >
-                  1/{g}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Note Repeat */}
-          <button
-            onClick={() => setNoteRepeat(!noteRepeat)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded text-[13px] font-bold uppercase transition-all border ${
-              noteRepeat
-                ? "bg-purple-600/20 text-purple-400 border-purple-500/50"
-                : "bg-neutral-800 text-neutral-500 border-neutral-700"
-            }`}
-          >
-            <Repeat size={12} /> Note Repeat
-          </button>
-          {noteRepeat && (
-            <>
-              <select
-                value={noteRepeatDivision}
-                onChange={(e) => setNoteRepeatDivision(e.target.value as NoteRepeatDivision)}
-                className="bg-neutral-800 border border-neutral-700 text-xs text-neutral-300 rounded px-1 py-1.5"
-              >
-                <option value="1/4">1/4</option>
-                <option value="1/8">1/8</option>
-                <option value="1/16">1/16</option>
-                <option value="1/32">1/32</option>
-                <option value="1/8T">1/8T</option>
-                <option value="1/16T">1/16T</option>
-              </select>
-              <select
-                value={noteRepeatCount}
-                onChange={(e) => setNoteRepeatCount(Number(e.target.value))}
-                className="bg-neutral-800 border border-neutral-700 text-xs text-neutral-300 rounded px-1 py-1.5"
-              >
-                <option value={0}>Hold</option>
-                <option value={4}>4</option>
-                <option value={8}>8</option>
-                <option value={16}>16</option>
-              </select>
-            </>
-          )}
-
-          {/* 16 Levels */}
-          <button
-            onClick={() => setSixteenLevels(!sixteenLevels)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded text-[13px] font-bold uppercase transition-all border ${
-              sixteenLevels
-                ? "bg-orange-600/20 text-orange-400 border-orange-500/50"
-                : "bg-neutral-800 text-neutral-500 border-neutral-700"
-            }`}
-          >
-            <Layers size={12} /> 16 Levels
-          </button>
-          {sixteenLevels && (
-            <select
-              value={sixteenLevelsParam}
-              onChange={(e) => setSixteenLevelsParam(e.target.value as SixteenLevelsParam)}
-              className="bg-neutral-800 border border-neutral-700 text-xs text-neutral-300 rounded px-1 py-1.5"
-            >
-              <option value="Velocity">Vel</option>
-              <option value="Tune">Tune</option>
-              <option value="Pan">Pan</option>
-              <option value="Filter">Filter</option>
-            </select>
-          )}
-
-          {/* Pad Mute Mode */}
-          <button
-            onClick={() => setPadMuteMode(!padMuteMode)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded text-[13px] font-bold uppercase transition-all border ${
-              padMuteMode
-                ? "bg-red-600/20 text-red-400 border-red-500/50"
-                : "bg-neutral-800 text-neutral-500 border-neutral-700"
-            }`}
-          >
-            <Ban size={12} /> Mute
-          </button>
-
-          {/* Keyboard Mode */}
-          <button
-            onClick={() => setKeyboardMode(!keyboardMode)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded text-[13px] font-bold uppercase transition-all border ${
-              keyboardMode
-                ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/50"
-                : "bg-neutral-800 text-neutral-500 border-neutral-700"
-            }`}
-            title="QWERTY → Pads (Q/W/E/R, A/S/D/F, Z/X/C/V, T/Y/U/I)"
-          >
-            <Keyboard size={12} /> Keys
-          </button>
-
-          {/* Step Count */}
-          <div className="flex items-center gap-1">
-            {([16, 32, 64] as const).map((sc) => (
-              <button
-                key={sc}
-                onClick={() => setStepCount(sc)}
-                className={`px-2 py-1 text-[11px] font-bold border rounded ${
-                  stepCount === sc
-                    ? "bg-brand border-brand text-white"
-                    : "bg-neutral-800 border-neutral-700 text-neutral-500 hover:border-neutral-600"
-                }`}
-              >
-                {sc}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Right side: pattern actions + load */}
-        <div className="flex gap-2">
-          <button onClick={handleCopyPattern} className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded text-xs font-bold uppercase transition-colors border border-neutral-700" title="Copy Pattern">
-            <Copy size={12} />
-          </button>
-          <button onClick={handlePastePattern} className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-bold uppercase transition-colors border ${hasCopiedPattern ? "bg-neutral-800 hover:bg-neutral-700 text-neutral-400 border-neutral-700" : "bg-neutral-800/50 text-neutral-600 border-neutral-800 cursor-not-allowed"}`} title="Paste Pattern" disabled={!hasCopiedPattern}>
-            <ClipboardPaste size={12} />
-          </button>
-          <button onClick={handleTrashPattern} className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded text-xs font-bold uppercase transition-colors border border-neutral-700" title="Clear Pattern">
-            <Trash2 size={12} />
-          </button>
-          <button onClick={handleImportLastChop} className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded text-xs font-bold uppercase transition-colors border border-neutral-700" title="Import Last Chop">
-            <Download size={12} /> Chop
-          </button>
-
-          <div className="relative group">
-            <button className="flex items-center gap-2 px-4 py-2 bg-brand hover:opacity-90 text-white rounded font-bold text-xs uppercase transition-colors shadow-lg shadow-brand/20">
-              <Plus size={14} /> Load Kit
-            </button>
-            <div className="absolute right-0 top-full mt-2 w-48 bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-2 flex flex-col gap-1">
-              <button
-                onClick={() => xpmInputRef.current?.click()}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-800 rounded text-[13px] text-neutral-300 transition-colors text-left"
-              >
-                <FileCode size={12} className="text-red-500" /> .XPM (Drum Program)
-              </button>
-              <button
-                onClick={() => sxqInputRef.current?.click()}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-800 rounded text-[13px] text-neutral-300 transition-colors text-left"
-              >
-                <FileCode size={12} className="text-blue-500" /> .SXQ (Drum Sequence)
-              </button>
-              <button
-                onClick={() => stemImportRef.current?.click()}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-800 rounded text-[13px] text-neutral-300 transition-colors text-left"
-              >
-                <FileCode size={12} className="text-green-500" /> Stem Program (.json)
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DrumQuickActions
+        preCount={preCount}
+        setPreCount={setPreCount}
+        recordMode={recordMode}
+        setRecordMode={setRecordMode}
+        globalSwing={globalSwing}
+        setGlobalSwing={setGlobalSwing}
+        quantizeStrength={quantizeStrength}
+        setQuantizeStrength={setQuantizeStrength}
+        quantizeGrid={quantizeGrid}
+        setQuantizeGrid={setQuantizeGrid}
+        noteRepeat={noteRepeat}
+        setNoteRepeat={setNoteRepeat}
+        noteRepeatDivision={noteRepeatDivision}
+        setNoteRepeatDivision={setNoteRepeatDivision}
+        noteRepeatCount={noteRepeatCount}
+        setNoteRepeatCount={setNoteRepeatCount}
+        sixteenLevels={sixteenLevels}
+        setSixteenLevels={setSixteenLevels}
+        sixteenLevelsParam={sixteenLevelsParam}
+        setSixteenLevelsParam={setSixteenLevelsParam}
+        padMuteMode={padMuteMode}
+        setPadMuteMode={setPadMuteMode}
+        keyboardMode={keyboardMode}
+        setKeyboardMode={setKeyboardMode}
+        stepCount={stepCount}
+        setStepCount={setStepCount}
+        onQuantize={handleQuantize}
+        onCopyPattern={handleCopyPattern}
+        onPastePattern={handlePastePattern}
+        onTrashPattern={handleTrashPattern}
+        onImportChop={handleImportLastChop}
+        hasCopiedPattern={hasCopiedPattern}
+        xpmInputRef={xpmInputRef}
+        sxqInputRef={sxqInputRef}
+        stemImportRef={stemImportRef}
+      />
 
       {/* ── Main Content: MPC Pads (left) + Step Sequencer (right) ── */}
       <div className="flex-1 flex gap-4 min-h-0">
-        {/* ═══════════ Left Panel: MPC-Style Pad Grid ═══════════ */}
         <div className="relative w-80 flex flex-col gap-4 bg-neutral-900 rounded-lg border border-neutral-800 p-4 overflow-y-auto vignette noise-texture">
           <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-2">
             <Activity size={14} /> MPC Pads
           </h3>
 
-          {/* 4x4 Pad Grid */}
-          <div className="grid grid-cols-4 gap-2">
-            {pads.map((pad) => {
-              const isFlashing = triggeredPads.has(pad.trackId);
-              const isHeld = heldPads.has(pad.trackId);
-              const isMuted = mutedPads.has(pad.trackId);
-              const level = pad.id + 1;
-              return (
-                <button
-                  key={pad.trackId}
-                  onMouseDown={(e) => handlePadTrigger(pad.trackId, e)}
-                  onMouseUp={() => handlePadRelease(pad.trackId)}
-                  onMouseLeave={() => handlePadRelease(pad.trackId)}
-                  className={`relative group aspect-square bg-neutral-800 rounded-md border-b-4 border-neutral-950 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center overflow-hidden hover:shadow-[0_0_12px_rgba(255,199,44,0.08)] ${
-                    activeTrack === pad.trackId ? "ring-1 ring-brand" : ""
-                  } ${isFlashing ? "pad-flash" : ""} ${isHeld ? "pad-held" : ""} ${isMuted ? "opacity-40 saturate-0" : ""}`}
-                  style={{ borderTop: `2px solid ${pad.color}44`, "--pad-glow": pad.color + "80" } as React.CSSProperties}
-                >
-                  {isMuted && (
-                    <div className="absolute inset-0 bg-red-900/40 z-10 rounded-md flex items-center justify-center">
-                      <Ban size={20} className="text-red-500" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <span className="text-xs font-bold text-neutral-400 group-hover:text-white transition-colors leading-tight text-center px-1">
-                    {sixteenLevels ? `Lv.${level}` : pad.label}
-                  </span>
-                  {/* Sample loaded indicator */}
-                  {enginePads[pad.trackId]?.sample && !sixteenLevels && (
-                    <span className="text-[6px] font-mono text-emerald-500 mt-0.5 truncate max-w-[90%]">
-                      {enginePads[pad.trackId].sample!.name.slice(0, 12)}
-                    </span>
-                  )}
-                  {/* Upload button (hover) */}
-                  <div
-                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => { e.stopPropagation(); openSampleLoader(pad.trackId); }}
-                  >
-                    <Upload size={9} className="text-neutral-400 hover:text-white" />
-                  </div>
-                  {/* Choke group indicator */}
-                  {pad.chokeColor && (
-                    <div
-                      className="absolute top-1 left-1 w-2 h-2 rounded-full border border-black/40"
-                      style={{ backgroundColor: pad.chokeColor }}
-                      title={`Choke ${pad.chokeGroup}`}
-                    ></div>
-                  )}
-                  {/* Filter indicator */}
-                  {pad.filterType !== "off" && (
-                    <div className="absolute top-1 right-1 group-hover:hidden">
-                      <Filter size={7} className="text-cyan-400" />
-                    </div>
-                  )}
-                  <div
-                    className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full opacity-40"
-                    style={{ backgroundColor: pad.color }}
-                  ></div>
-                </button>
-              );
-            })}
-          </div>
+          <PadGrid
+            pads={pads}
+            activeTrack={activeTrack}
+            triggeredPads={triggeredPads}
+            heldPads={heldPads}
+            mutedPads={mutedPads}
+            sixteenLevels={sixteenLevels}
+            enginePads={enginePads}
+            activePadBank={activePadBank}
+            setActivePadBank={setActivePadBank}
+            globalSwing={globalSwing}
+            onPadTrigger={handlePadTrigger}
+            onPadRelease={handlePadRelease}
+            onOpenSampleLoader={openSampleLoader}
+          />
 
-          {/* Pad Bank Selector */}
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between text-xs font-mono text-neutral-600 uppercase">
-              <span>Pad Bank</span>
-            </div>
-            <div className="flex gap-1">
-              {(["A", "B", "C", "D"] as const).map((bank) => (
-                <button
-                  key={bank}
-                  onClick={() => setActivePadBank(bank)}
-                  className={`flex-1 py-1.5 text-[13px] font-bold uppercase border rounded transition-all ${
-                    activePadBank === bank
-                      ? "bg-brand border-brand text-white shadow-lg shadow-brand/20"
-                      : "bg-neutral-800 border-neutral-700 text-neutral-500 hover:border-neutral-600"
-                  }`}
-                >
-                  {bank}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Groove / Swing Visualizer */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-mono text-neutral-600 uppercase">Groove</span>
-            <div className="flex justify-between items-center px-1 h-3">
-              {Array.from({ length: 8 }, (_, i) => {
-                const isEven = i % 2 === 1; // off-beat positions shift right with swing
-                const shiftPx = isEven ? (globalSwing / 100) * 6 : 0;
-                return (
-                  <div
-                    key={i}
-                    className="groove-dot w-1.5 h-1.5 rounded-full"
-                    style={{
-                      backgroundColor: isEven ? "var(--brand-primary, #ffc72c)" : "rgba(255,255,255,0.2)",
-                      transform: `translateX(${shiftPx}px)`,
-                      boxShadow: isEven && globalSwing > 30 ? "0 0 4px var(--brand-primary-glow, rgba(255,199,44,0.4))" : "none",
-                    }}
-                  />
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ── Track Detail Panel ── */}
-          <div className="bg-neutral-800/50 rounded-lg border border-neutral-700/50 p-3 flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-2">
-                <SlidersHorizontal size={12} />{" "}
-                {TRACK_NAMES[activeTrack] ?? `Track ${activeTrack + 1}`}
-              </h3>
-              <button
-                onClick={() => setShowTrackDetail((v) => !v)}
-                className="text-xs font-bold text-neutral-600 hover:text-neutral-300 uppercase transition-colors"
-              >
-                {showTrackDetail ? "Hide" : "Show"}
-              </button>
-            </div>
-
-            {showTrackDetail && (
-              <div className="flex flex-col gap-3">
-                {/* Choke Group */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <Link2 size={10} className="text-neutral-500" />
-                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Choke Group</span>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => updateTrack(activeTrack, { chokeGroup: null })}
-                      className={`px-2 py-1 text-[11px] font-bold uppercase border rounded ${
-                        activeSettings.chokeGroup === null
-                          ? "bg-red-600 border-red-500 text-white"
-                          : "bg-neutral-800 border-neutral-700 text-neutral-500 hover:border-neutral-600"
-                      }`}
-                    >
-                      None
-                    </button>
-                    {[1, 2, 3, 4].map((g) => (
-                      <button
-                        key={g}
-                        onClick={() => updateTrack(activeTrack, { chokeGroup: g })}
-                        className={`px-2 py-1 text-[11px] font-bold uppercase border rounded ${
-                          activeSettings.chokeGroup === g
-                            ? "border-white text-white"
-                            : "bg-neutral-800 border-neutral-700 text-neutral-500 hover:border-neutral-600"
-                        }`}
-                        style={activeSettings.chokeGroup === g ? { backgroundColor: CHOKE_COLORS[g] + "60", borderColor: CHOKE_COLORS[g] } : undefined}
-                      >
-                        {g}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Filter */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <Filter size={10} className="text-neutral-500" />
-                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Filter</span>
-                  </div>
-                  <div className="flex gap-1">
-                    {(["off", "lp", "hp", "bp"] as const).map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => updateTrack(activeTrack, { filterType: type })}
-                        className={`px-2 py-1 text-[11px] font-bold uppercase border rounded ${
-                          activeSettings.filterType === type
-                            ? "bg-cyan-600 border-cyan-500 text-white"
-                            : "bg-neutral-800 border-neutral-700 text-neutral-500 hover:border-neutral-600"
-                        }`}
-                      >
-                        {type === "off" ? "Off" : type === "lp" ? "LP" : type === "hp" ? "HP" : "BP"}
-                      </button>
-                    ))}
-                  </div>
-                  {activeSettings.filterType !== "off" && (
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] text-neutral-500">
-                        <span>Cutoff</span>
-                        <span>{activeSettings.filterCutoff}</span>
-                      </div>
-                      <input
-                        type="range" min={0} max={127}
-                        value={activeSettings.filterCutoff}
-                        onChange={(e) => updateTrack(activeTrack, { filterCutoff: parseInt(e.target.value, 10) })}
-                        className="w-full h-1 bg-neutral-800 appearance-none accent-cyan-500"
-                      />
-                      <div className="flex justify-between text-[11px] text-neutral-500">
-                        <span>Resonance</span>
-                        <span>{activeSettings.filterResonance}</span>
-                      </div>
-                      <input
-                        type="range" min={0} max={127}
-                        value={activeSettings.filterResonance}
-                        onChange={(e) => updateTrack(activeTrack, { filterResonance: parseInt(e.target.value, 10) })}
-                        className="w-full h-1 bg-neutral-800 appearance-none accent-cyan-500"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Velocity Curve */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <Activity size={10} className="text-neutral-500" />
-                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Velocity</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={activeSettings.velocityCurve}
-                      onChange={(e) => updateTrack(activeTrack, { velocityCurve: e.target.value as VelocityCurveType })}
-                      className="flex-1 bg-neutral-800 border border-neutral-700 text-xs text-neutral-300 rounded px-1 py-1"
-                    >
-                      <option value="linear">Linear</option>
-                      <option value="exponential">Exponential</option>
-                      <option value="logarithmic">Logarithmic</option>
-                      <option value="constant">Constant</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[10px] text-neutral-600">Sensitivity</span>
-                    <input
-                      type="range" min={0} max={100} step={1}
-                      value={activeSettings.padSensitivity}
-                      onChange={(e) => updateTrack(activeTrack, { padSensitivity: parseInt(e.target.value, 10) })}
-                      className="flex-1 h-1 bg-neutral-800 appearance-none accent-cyan-500"
-                    />
-                    <span className="text-[10px] font-mono text-neutral-500 w-6">{activeSettings.padSensitivity}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] text-neutral-600">Min</span>
-                    <input
-                      type="range" min={0} max={100} step={1}
-                      value={activeSettings.minVelocity * 100}
-                      onChange={(e) => updateTrack(activeTrack, { minVelocity: parseInt(e.target.value, 10) / 100 })}
-                      className="flex-1 h-1 bg-neutral-800 appearance-none accent-green-500"
-                    />
-                    <span className="text-[10px] font-mono text-neutral-500 w-6">{Math.round(activeSettings.minVelocity * 100)}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] text-neutral-600">Max</span>
-                    <input
-                      type="range" min={0} max={100} step={1}
-                      value={activeSettings.maxVelocity * 100}
-                      onChange={(e) => updateTrack(activeTrack, { maxVelocity: parseInt(e.target.value, 10) / 100 })}
-                      className="flex-1 h-1 bg-neutral-800 appearance-none accent-green-500"
-                    />
-                    <span className="text-[10px] font-mono text-neutral-500 w-6">{Math.round(activeSettings.maxVelocity * 100)}</span>
-                  </div>
-                </div>
-
-                {/* Per-track Swing */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <Repeat size={10} className="text-neutral-500" />
-                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Track Swing</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="range" min={0} max={100} step={1}
-                      value={activeSettings.swing}
-                      onChange={(e) => updateTrack(activeTrack, { swing: parseInt(e.target.value, 10) })}
-                      className="flex-1 h-1 bg-neutral-800 appearance-none accent-red-500"
-                    />
-                    <span className="text-[13px] font-mono text-neutral-400 min-w-10">
-                      {activeSettings.swing === 0 ? "Global" : `${activeSettings.swing}%`}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Time Stretch + Pitch Shift */}
-                <div className="flex flex-col gap-1 border-t border-neutral-800 pt-2 mt-1">
-                  <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Time & Pitch</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-neutral-600 min-w-14">Stretch</span>
-                    <input
-                      type="range" min={50} max={200} step={1}
-                      value={Math.round(activeSettings.timeStretch * 100)}
-                      onChange={(e) => updateTrack(activeTrack, { timeStretch: parseInt(e.target.value, 10) / 100 })}
-                      className="flex-1 h-1 bg-neutral-800 appearance-none accent-purple-500"
-                    />
-                    <span className="text-[11px] font-mono text-neutral-400 w-10 text-right">
-                      {Math.round(activeSettings.timeStretch * 100)}%
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-neutral-600 min-w-14">Pitch</span>
-                    <input
-                      type="range" min={-12} max={12} step={1}
-                      value={activeSettings.pitchShift}
-                      onChange={(e) => updateTrack(activeTrack, { pitchShift: parseInt(e.target.value, 10) })}
-                      className="flex-1 h-1 bg-neutral-800 appearance-none accent-purple-500"
-                    />
-                    <span className="text-[11px] font-mono text-neutral-400 w-10 text-right">
-                      {activeSettings.pitchShift > 0 ? "+" : ""}{activeSettings.pitchShift}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Mute / Solo */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => updateTrack(activeTrack, { muted: !activeSettings.muted })}
-                    className={`flex-1 py-1.5 text-[11px] font-bold uppercase border rounded ${
-                      activeSettings.muted
-                        ? "bg-yellow-600 border-yellow-500 text-white"
-                        : "bg-neutral-800 border-neutral-700 text-neutral-500 hover:border-neutral-600"
-                    }`}
-                  >
-                    {activeSettings.muted ? "Unmute" : "Mute"}
-                  </button>
-                  <button
-                    onClick={() => updateTrack(activeTrack, { solo: !activeSettings.solo })}
-                    className={`flex-1 py-1.5 text-[11px] font-bold uppercase border rounded ${
-                      activeSettings.solo
-                        ? "bg-green-600 border-green-500 text-white"
-                        : "bg-neutral-800 border-neutral-700 text-neutral-500 hover:border-neutral-600"
-                    }`}
-                  >
-                    {activeSettings.solo ? "Unsolo" : "Solo"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <TrackDetailPanel
+            activeTrack={activeTrack}
+            trackSettings={trackSettings}
+            showTrackDetail={showTrackDetail}
+            setShowTrackDetail={setShowTrackDetail}
+            onUpdateTrack={updateTrack}
+            TRACK_NAMES={TRACK_NAMES}
+            CHOKE_COLORS={CHOKE_COLORS}
+          />
         </div>
 
-        {/* ═══════════ Right Panel: Step Sequencer ═══════════ */}
         <div className="relative flex-1 flex flex-col gap-4 bg-neutral-900 rounded-lg border border-neutral-800 p-4 min-w-0 overflow-y-auto vignette noise-texture">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-2">
-              <Music size={14} /> Step Sequencer
-            </h3>
-            <div className="flex items-center gap-2">
-              {/* FL-style Pattern Slots 1-8 */}
-              <div className="flex items-center gap-1 mr-2">
-                <span className="text-[9px] font-mono text-neutral-600 uppercase mr-1">Pat</span>
-                {Array.from({ length: 8 }, (_, i) => i + 1).map((slot) => (
-                  <button
-                    key={slot}
-                    onClick={() => handlePatternSlotChange(slot)}
-                    className={`w-6 h-6 text-[10px] font-bold rounded border transition-all ${
-                      activePatternSlot === slot
-                        ? "pattern-active bg-brand/20 border-brand text-white"
-                        : patternBank[slot]
-                          ? "bg-neutral-800 border-neutral-600 text-neutral-400 hover:border-neutral-500"
-                          : "bg-neutral-800/50 border-neutral-700 text-neutral-600 hover:border-neutral-600"
-                    }`}
-                  >
-                    {slot}
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => setShowAutomation(!showAutomation)}
-                className={`flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold uppercase border rounded transition-all ${
-                  showAutomation
-                    ? "bg-red-600/20 text-red-400 border-red-500/50"
-                    : "bg-neutral-800 text-neutral-500 border-neutral-700 hover:border-neutral-600"
-                }`}
-              >
-                Automation
-              </button>
-              <button
-                onClick={() => setShowVelocity(!showVelocity)}
-                className={`flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold uppercase border rounded transition-all ${
-                  showVelocity
-                    ? "bg-orange-600/20 text-orange-400 border-orange-500/50"
-                    : "bg-neutral-800 text-neutral-500 border-neutral-700 hover:border-neutral-600"
-                }`}
-              >
-                Velocity
-              </button>
-              <button
-                onClick={() => sxqSeqInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold uppercase border rounded bg-neutral-800 text-neutral-500 border-neutral-700 hover:border-neutral-600 transition-all"
-              >
-                <Download size={10} /> Load .SXQ
-              </button>
-            </div>
-          </div>
+          <StepSequencerGrid
+            tracks={tracks}
+            pattern={pattern}
+            stepCount={stepCount}
+            currentStep={currentStep}
+            activeTrack={activeTrack}
+            setActiveTrack={setActiveTrack}
+            activePatternSlot={activePatternSlot}
+            showAutomation={showAutomation}
+            showVelocity={showVelocity}
+            toggleStep={toggleStep}
+            velocityMap={velocityMap}
+            handlePatternSlotChange={handlePatternSlotChange}
+            setShowAutomation={setShowAutomation}
+            setShowVelocity={setShowVelocity}
+            onSxqLoad={() => sxqSeqInputRef.current?.click()}
+            patternBank={patternBank}
+          />
 
-          {/* Sequencer Rows */}
-          <div className="flex flex-col gap-0.5">
-            {/* Step number header */}
-            <div className="flex items-center gap-0">
-              <div className={`${TRACK_LABEL_W} shrink-0`}></div>
-              <div className="flex-1 flex">
-                {Array.from({ length: stepCount }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`flex-1 text-center text-[9px] font-mono ${
-                      i % 4 === 0 ? "text-neutral-500" : "text-neutral-700"
-                    }`}
-                  >
-                    {i % 4 === 0 ? i + 1 : ""}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Track rows */}
-            {tracks.map((track) => {
-              const trackColor = TRACK_COLORS[track.id % TRACK_COLORS.length];
-              const isActive = activeTrack === track.id;
-              const activeSteps = new Set(pattern[track.id] ?? []);
-              return (
-                <div
-                  key={track.id}
-                  className={`flex items-center gap-0 group/row rounded transition-colors ${
-                    isActive ? "bg-neutral-800/50" : "hover:bg-neutral-800/30"
-                  }`}
-                  onClick={() => setActiveTrack(track.id)}
-                >
-                  {/* Track label */}
-                  <div className={`${TRACK_LABEL_W} shrink-0 flex items-center gap-2 px-2 py-1`}>
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: trackColor }}></div>
-                    <span className={`text-[11px] font-bold uppercase truncate ${
-                      isActive ? "text-white" : "text-neutral-500"
-                    }`}>
-                      {track.name}
-                    </span>
-                    {track.settings.muted && (
-                      <div className="led led-mute shrink-0" title="Muted"></div>
-                    )}
-                    {track.settings.solo && (
-                      <div className="led led-solo shrink-0" title="Solo"></div>
-                    )}
-                  </div>
-
-                  {/* Step cells */}
-                  <div className="flex-1 relative h-7 bg-neutral-950/50 rounded-sm overflow-hidden">
-                    {Array.from({ length: stepCount }, (_, step) => (
-                      <StepCell
-                        key={step}
-                        trackId={track.id}
-                        step={step}
-                        isActive={activeSteps.has(step)}
-                        trackColor={trackColor}
-                        isCurrent={currentStep === step}
-                        onToggle={toggleStep}
-                        stepCount={stepCount}
-                        velocity={velocityMap[track.id]?.[step]}
-                        showVelocity={showVelocity}
-                      />
-                    ))}
-                    {/* Beat dividers */}
-                    {Array.from({ length: Math.floor(stepCount / 4) }, (_, i) => (
-                      <div
-                        key={`div-${i}`}
-                        className="absolute top-0 bottom-0 border-l border-neutral-700/30"
-                        style={{ left: `${((i * 4) / stepCount) * 100}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* ── Automation Lane ── */}
-          {showAutomation && (
-            <div className="flex flex-col gap-2 border-t border-neutral-800 pt-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`${TRACK_LABEL_W} text-xs font-bold text-neutral-500 uppercase tracking-wider`}>
-                    Automation
-                  </span>
-                  <div className="flex gap-1">
-                    {(["Volume", "Pan", "Filter Cutoff"] as const).map((param) => (
-                      <button
-                        key={param}
-                        onClick={() => setAutomationParam(param)}
-                        className={`px-2 py-0.5 text-[10px] font-bold uppercase border rounded transition-all ${
-                          automationParam === param
-                            ? "bg-red-600/20 text-red-400 border-red-500/50"
-                            : "bg-neutral-800 text-neutral-600 border-neutral-700 hover:border-neutral-600"
-                        }`}
-                      >
-                        {param}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Automation visualization */}
-              <div
-                className="relative h-24 bg-neutral-950 rounded border border-neutral-800 cursor-crosshair"
-                onPointerMove={handleAutomationPointerMove}
-                onPointerDown={handleAutomationPointerMove}
-              >
-                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                  {/* Grid lines */}
-                  {Array.from({ length: 16 }, (_, i) => (
-                    <line
-                      key={i}
-                      x1={`${(i / 16) * 100}%`}
-                      y1="0"
-                      x2={`${(i / 16) * 100}%`}
-                      y2="100%"
-                      stroke="#262626"
-                      strokeWidth="1"
-                    />
-                  ))}
-                  {/* Automation points */}
-                  {(() => {
-                    const lane = automationData[activeTrack] ?? Array(16).fill(0.5);
-                    const pts = lane.map((v, i) => {
-                      const x = ((i + 0.5) / 16) * 100;
-                      const y = (1 - v) * 100;
-                      return { x, y };
-                    });
-                    const pathD = pts
-                      .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x}% ${p.y}%`)
-                      .join(" ");
-                    return (
-                      <>
-                        <path
-                          d={pathD}
-                          fill="none"
-                          stroke="#ef4444"
-                          strokeWidth="1.5"
-                          strokeDasharray="4 2"
-                        />
-                        {pts.map((p, i) => (
-                          <circle
-                            key={i}
-                            cx={`${p.x}%`}
-                            cy={`${p.y}%`}
-                            r="3"
-                            fill="#ef4444"
-                          />
-                        ))}
-                      </>
-                    );
-                  })()}
-                </svg>
-              </div>
-            </div>
-          )}
+          <AutomationLane
+            showAutomation={showAutomation}
+            automationParam={automationParam}
+            setAutomationParam={setAutomationParam}
+            activeTrack={activeTrack}
+            automationData={automationData}
+            onAutomationPointerMove={handleAutomationPointerMove}
+          />
         </div>
       </div>
 

@@ -5,21 +5,16 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import { Knob } from "./Knob";
 import { useTBMAudio } from "../contexts/TBMAudioContext";
 import type { ScratchEvent, CrossfaderCurve } from "../lib/TBMAudioEngine";
 import {
   Disc3,
-  Play,
-  Square,
-  Circle,
   Shuffle,
-  Sliders,
+  Play,
+  Circle,
   Zap,
+  Sliders,
   Music,
-  Repeat,
-  Scissors,
-  UploadCloud,
   ListMusic,
   ArrowRight,
   Plus,
@@ -34,8 +29,17 @@ import {
   GitBranch,
   Send,
 } from "lucide-react";
+import { Knob } from "./Knob";
 import { DEFAULT_BPM } from "../lib/constants";
-import { useGeminiSlate4 } from "./GeminiSlate4Integration";
+import { useController } from "./ControllerPanel";
+import { VinylDeck } from "./VinylDeck";
+import { CrossfaderSection } from "./CrossfaderSection";
+import { TransportSection } from "./TransportSection";
+import { TurntableEmulationSection } from "./TurntableEmulationSection";
+import { SonicFXSection } from "./SonicFXSection";
+import { MiniMixerSection } from "./MiniMixerSection";
+import { QuickActionsSection } from "./QuickActionsSection";
+import { StatusSection } from "./StatusSection";
 
 type ScratchStyle = {
   id: string;
@@ -262,7 +266,7 @@ export function VinylScratchPro({
   } = useTBMAudio();
 
   // ── Gemini Slate 4 controller detection ──
-  const { slate4Detected, isInitialized: slate4Ready } = useGeminiSlate4();
+  const { controllerDetected: slate4Detected, isInitialized: slate4Ready } = useController();
   // Track whether user has manually overridden the auto-switch
   const userOverrodeSlate4Ref = useRef(false);
 
@@ -2855,168 +2859,36 @@ export function VinylScratchPro({
         <div className="flex-1 flex gap-4 min-h-0">
           {/* Left Column: Vinyl Platter + Fader */}
           <div className="w-72 flex flex-col gap-4 shrink-0">
-            {/* Vinyl Platter Visualization */}
-            <div
-              className={`relative aspect-square rounded-2xl border-2 transition-all overflow-hidden flex items-center justify-center noise-texture ${
-                isDragging
-                  ? "border-brand border-dashed bg-brand/5"
-                  : "border-border-main bg-bg-main/50"
-              }`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
+            <VinylDeck
+              isPlaying={isPlaying}
+              activeMode={activeMode}
+              isDragging={isDragging}
+              selectedSample={selectedSample}
+              liveDirection={liveDirection}
+              platAngleRef={platAngleRef}
+              platterDomRef={platterDomRef}
+              vinylRpm={vinylRpm}
+              speedMult={speedMult}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleFileDrop}
-            >
-              {/* Drop zone overlay */}
-              {isDragging && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-2 bg-bg-main/90 z-10">
-                  <UploadCloud className="w-10 h-10 text-brand animate-pulse" />
-                  <span className="text-sm font-bold text-brand uppercase tracking-widest">
-                    Drop Audio File
-                  </span>
-                  <span className="text-xs text-neutral-500">
-                    Left side → Deck A • Right side → Deck B
-                  </span>
-                </div>
-              )}
-              {/* Platter rings */}
-              <div
-                ref={platterDomRef}
-                className="w-56 h-56 rounded-full border-4 border-neutral-700/50 flex items-center justify-center"
-                style={{
-                  transform:
-                    activeMode === "turntable"
-                      ? `rotate(${platAngleRef.current}deg)`
-                      : undefined,
-                  transition: activeMode === "turntable" ? "none" : undefined,
-                  animation:
-                    isPlaying && activeMode !== "turntable"
-                      ? "spin 2s linear infinite"
-                      : "none",
-                }}
-              >
-                <div className="w-44 h-44 rounded-full border-2 border-neutral-700/30 flex items-center justify-center">
-                  <div className="w-32 h-32 rounded-full border border-neutral-700/20 flex items-center justify-center bg-bg-surface/30">
-                    <div className="w-16 h-16 rounded-full bg-brand/20 border border-brand/40 flex items-center justify-center">
-                      <div className="w-4 h-4 rounded-full bg-brand shadow-[0_0_12px_var(--brand-primary-glow)]"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Turntable mode: tonearm decoration */}
-              {activeMode === "turntable" && (
-                <div className="absolute top-3 right-3 flex flex-col items-end gap-1 pointer-events-none">
-                  <div className="text-xs font-mono text-brand uppercase">
-                    {vinylRpm} RPM
-                  </div>
-                  <div className="text-xs font-mono text-neutral-500 uppercase">
-                    {speedMult.toFixed(2)}×
-                  </div>
-                </div>
-              )}
-              {/* Drop zone overlay */}
-              {!selectedSample && !isDragging && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-2">
-                  <UploadCloud className="w-7 h-7 text-neutral-600 opacity-50" />
-                  <span className="text-[13px] font-bold text-neutral-600 uppercase tracking-widest">
-                    Drop Audio File
-                  </span>
-                </div>
-              )}
-              {/* Playing indicator */}
-              {isPlaying && (
-                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indicator animate-pulse shadow-[0_0_8px_var(--indicator-glow)] dot-glow"></div>
-              )}
-              {/* Live mode: direction badge */}
-              {activeMode === "live" && liveDirection !== "stopped" && (
-                <div
-                  className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-xs font-bold uppercase ${
-                    liveDirection === "forward"
-                      ? "bg-indicator/20 text-indicator"
-                      : "bg-red-500/20 text-red-400"
-                  }`}
-                >
-                  {liveDirection === "forward" ? "▶ Forward" : "◀ Reverse"}
-                </div>
-              )}
-            </div>
+            />
 
-            {/* Crossfader */}
-            <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex flex-col gap-3 vignette">
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] font-bold text-neutral-500 uppercase tracking-widest">
-                  Crossfader
-                </span>
-                <select
-                  value={faderCurve}
-                  onChange={(e) => setFaderCurve(e.target.value)}
-                  className="bg-bg-main border border-border-main text-xs text-neutral-400 rounded px-1.5 py-0.5 outline-none"
-                >
-                  <option value="linear">Linear</option>
-                  <option value="exponential">Exponential</option>
-                  <option value="s_curve">S-Curve</option>
-                  <option value="hard_cut">Hard Cut</option>
-                </select>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={faderPosition}
-                onChange={(e) => setFaderPosition(parseInt(e.target.value))}
-                className="w-full h-2 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-brand"
-              />
-              <div className="flex justify-between text-xs font-mono text-neutral-600">
-                <span>Cut</span>
-                <span className="text-brand font-bold">{faderPosition}%</span>
-                <span>Open</span>
-              </div>
-            </div>
+            <CrossfaderSection
+              faderPosition={faderPosition}
+              faderCurve={faderCurve}
+              onFaderChange={setFaderPosition}
+              onCurveChange={setFaderCurve}
+            />
 
-            {/* Transport */}
-            <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex items-center justify-center gap-3 vignette">
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className={`p-3 rounded-lg transition-all ${
-                  isPlaying
-                    ? "bg-indicator/20 text-indicator border border-indicator/50 shadow-[0_0_10px_var(--indicator-glow)]"
-                    : "bg-bg-main text-neutral-400 hover:text-white border border-border-main"
-                }`}
-              >
-                <Play size={18} fill={isPlaying ? "currentColor" : "none"} />
-              </button>
-              <button
-                onClick={() => {
-                  setIsPlaying(false);
-                  if (isRecording) toggleRecording();
-                }}
-                className="p-3 rounded-lg bg-bg-main text-neutral-400 hover:text-white border border-border-main transition-all"
-              >
-                <Square size={18} fill="currentColor" />
-              </button>
-              <button
-                onClick={toggleRecording}
-                className={`p-3 rounded-lg transition-all ${
-                  isRecording
-                    ? "bg-red-600/20 text-red-400 border border-red-500/50 animate-pulse"
-                    : "bg-bg-main text-neutral-400 hover:text-red-400 border border-border-main"
-                }`}
-              >
-                <Circle
-                  size={18}
-                  fill={isRecording ? "currentColor" : "none"}
-                />
-              </button>
-              <div className="h-6 w-px bg-border-main"></div>
-              <button
-                onClick={handleAutoScratch}
-                className="flex items-center gap-2 px-4 py-2.5 bg-brand hover:opacity-90 text-white rounded-lg font-bold text-[13px] uppercase transition-all shadow-lg shadow-brand/20"
-              >
-                <Zap size={14} /> Auto-Scratch
-              </button>
-            </div>
+            <TransportSection
+              isPlaying={isPlaying}
+              isRecording={isRecording}
+              onTogglePlay={() => setIsPlaying(!isPlaying)}
+              onStop={() => { setIsPlaying(false); if (isRecording) toggleRecording(); }}
+              onToggleRecording={toggleRecording}
+              onAutoScratch={handleAutoScratch}
+            />
           </div>
 
           {/* Center Column: Mode-specific content */}
@@ -4645,194 +4517,53 @@ export function VinylScratchPro({
 
           {/* Right Column: Controls */}
           <div className="w-52 flex flex-col gap-4 shrink-0">
-            {/* Vinyl Simulation */}
-            <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex flex-col gap-3">
-              <span className="text-[13px] font-bold text-neutral-500 uppercase tracking-widest">
-                Turntable Emulation
-              </span>
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2 place-items-center">
-                <Knob
-                  label="Inertia"
-                  value={inertia}
-                  onChange={setInertia}
-                  color="#FFC72C"
-                />
-                <Knob
-                  label="Friction"
-                  value={friction}
-                  onChange={setFriction}
-                  color="#FFC72C"
-                />
-                <Knob
-                  label="Noise"
-                  value={vinylNoise}
-                  onChange={setVinylNoise}
-                  color="#39FF14"
-                />
-                <Knob
-                  label="Drift"
-                  value={pitchDrift}
-                  onChange={setPitchDrift}
-                  color="#39FF14"
-                />
-              </div>
-            </div>
+            <TurntableEmulationSection
+              inertia={inertia}
+              friction={friction}
+              vinylNoise={vinylNoise}
+              pitchDrift={pitchDrift}
+              onInertiaChange={setInertia}
+              onFrictionChange={setFriction}
+              onNoiseChange={setVinylNoise}
+              onDriftChange={setPitchDrift}
+            />
 
-            {/* Effects */}
-            <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex flex-col gap-3">
-              <span className="text-[13px] font-bold text-neutral-500 uppercase tracking-widest">
-                Sonic Degradation FX
-              </span>
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2 place-items-center">
-                <Knob
-                  label="Echo"
-                  value={echoWet}
-                  onChange={setEchoWet}
-                  color="#3b82f6"
-                />
-                <Knob
-                  label="Reverb"
-                  value={reverbWet}
-                  onChange={setReverbWet}
-                  color="#3b82f6"
-                />
-                <Knob
-                  label="Drive"
-                  value={drive}
-                  onChange={setDrive}
-                  color="#f97316"
-                />
-                <Knob
-                  label="Wear"
-                  value={wear}
-                  onChange={setWear}
-                  color="#f97316"
-                />
-                <Knob
-                  label="Crackle"
-                  value={crackle}
-                  onChange={setCrackle}
-                  color="#f97316"
-                />
-                <Knob
-                  label="Lo-Fi"
-                  value={lofiTone}
-                  onChange={setLofiTone}
-                  color="#f97316"
-                />
-              </div>
-            </div>
+            <SonicFXSection
+              echoWet={echoWet}
+              reverbWet={reverbWet}
+              drive={drive}
+              wear={wear}
+              crackle={crackle}
+              lofiTone={lofiTone}
+              onEchoChange={setEchoWet}
+              onReverbChange={setReverbWet}
+              onDriveChange={setDrive}
+              onWearChange={setWear}
+              onCrackleChange={setCrackle}
+              onLofiChange={setLofiTone}
+            />
 
-            <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <ListMusic size={12} className="text-brand" />
-                <span className="text-[13px] font-bold text-neutral-500 uppercase tracking-widest">
-                  Minimal Mixer
-                </span>
-              </div>
-              <div className="flex flex-col gap-2 text-xs font-mono text-neutral-500 uppercase">
-                <label className="flex items-center gap-2">
-                  Deck A{" "}
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={deckALevel}
-                    onChange={(e) => setDeckALevel(parseInt(e.target.value))}
-                    className="flex-1 accent-brand"
-                  />
-                </label>
-                <label className="flex items-center gap-2">
-                  Deck B{" "}
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={deckBLevel}
-                    onChange={(e) => setDeckBLevel(parseInt(e.target.value))}
-                    className="flex-1 accent-brand"
-                  />
-                </label>
-                <label className="flex items-center gap-2">
-                  Master{" "}
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={masterLevel}
-                    onChange={(e) => setMasterLevel(parseInt(e.target.value))}
-                    className="flex-1 accent-brand"
-                  />
-                </label>
-              </div>
-            </div>
+            <MiniMixerSection
+              deckALevel={deckALevel}
+              deckBLevel={deckBLevel}
+              masterLevel={masterLevel}
+              onDeckAChange={setDeckALevel}
+              onDeckBChange={setDeckBLevel}
+              onMasterChange={setMasterLevel}
+            />
 
-            {/* Quick Actions */}
-            <div className="bg-bg-surface rounded-xl border border-border-main p-4 flex flex-col gap-2">
-              <span className="text-[13px] font-bold text-neutral-500 uppercase tracking-widest">
-                Quick Actions
-              </span>
-              <button
-                onClick={handleExportClip}
-                className="w-full py-2 bg-bg-main hover:bg-neutral-800 text-neutral-300 text-[13px] font-bold uppercase rounded-lg transition-colors border border-border-main flex items-center justify-center gap-2"
-              >
-                <Scissors size={12} /> Export Clip
-              </button>
-              <button
-                onClick={handleSavePreset}
-                className="w-full py-2 bg-bg-main hover:bg-neutral-800 text-neutral-300 text-[13px] font-bold uppercase rounded-lg transition-colors border border-border-main flex items-center justify-center gap-2"
-              >
-                <Repeat size={12} /> Save as Preset
-              </button>
-              <button
-                onClick={handleExportMidi}
-                className="w-full py-2 bg-bg-main hover:bg-neutral-800 text-neutral-300 text-[13px] font-bold uppercase rounded-lg transition-colors border border-border-main flex items-center justify-center gap-2"
-              >
-                <Sliders size={12} /> Export MIDI
-              </button>
-            </div>
+            <QuickActionsSection
+              onExportClip={handleExportClip}
+              onSavePreset={handleSavePreset}
+              onExportMidi={handleExportMidi}
+            />
 
-            {/* Status */}
-            <div className="mt-auto bg-bg-main/60 rounded-lg border border-border-main p-3 flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-neutral-600 uppercase">
-                  Latency
-                </span>
-                <span
-                  className={`text-xs font-mono ${audioLatencyMs < 15 ? "text-indicator" : audioLatencyMs < 30 ? "text-brand" : "text-red-400"}`}
-                >
-                  {audioLatencyMs}ms
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-neutral-600 uppercase">
-                  CPU
-                </span>
-                <span
-                  className={`text-xs font-mono ${audioCpuPercent < 50 ? "text-indicator" : audioCpuPercent < 80 ? "text-brand" : "text-red-400"}`}
-                >
-                  {audioCpuPercent}%
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-neutral-600 uppercase">
-                  Sample Rate
-                </span>
-                <span className="text-xs font-mono text-indicator">
-                  {djEngine?.context?.sampleRate
-                    ? `${(djEngine.context.sampleRate / 1000).toFixed(1)}kHz`
-                    : "--"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-neutral-600 uppercase">
-                  Mode
-                </span>
-                <span className="text-xs font-mono text-brand uppercase">
-                  {activeMode}
-                </span>
-              </div>
-            </div>
+            <StatusSection
+              audioLatencyMs={audioLatencyMs}
+              audioCpuPercent={audioCpuPercent}
+              sampleRate={djEngine?.context?.sampleRate ? `${(djEngine.context.sampleRate / 1000).toFixed(1)}kHz` : "--"}
+              activeMode={activeMode}
+            />
           </div>
         </div>
       </div>
