@@ -50,7 +50,7 @@ data/uploads/
 data/stems/
 
 # Python (Demucs)
-Lib/
+/Lib/
 Scripts/
 Include/
 Big-Homie-Python/

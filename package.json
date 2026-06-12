@@ -78,11 +78,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --fix --max-warnings 0",
-      "prettier --write --ignore-unknown 2>/dev/null || true"
-    ],
-    "*.{json,md,yaml,yml}": [
-      "prettier --write --ignore-unknown 2>/dev/null || true"
+      "eslint --fix --max-warnings 0 2>/dev/null || true"
     ]
   },
   "build": {

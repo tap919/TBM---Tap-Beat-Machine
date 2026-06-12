@@ -450,3 +450,79 @@ describe('Plugins routes', () => {
     expect(typeof plugin.isEnabled).toBe('boolean');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SECURITY TESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+describe('Security — input validation and boundary enforcement', () => {
+  describe('Oversized JSON body rejection', () => {
+    it('rejects payloads over 1MB with 413 or 500', async () => {
+      const largePayload = { data: 'x'.repeat(1_100_000) };
+      const res = await request(app)
+        .post('/api/settings')
+        .send(largePayload)
+        .set('Content-Type', 'application/json');
+      // express.json({ limit: '1mb' }) returns 413 entity.too.large
+      // Route handlers may also respond with 500 after parsing
+      expect([413, 500]).toContain(res.status);
+    });
+
+    it('rejects malformed JSON with 400', async () => {
+      const res = await request(app)
+        .post('/api/analyze')
+        .set('Content-Type', 'application/json')
+        .send('this is not json');
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/invalid|JSON|parse/i);
+    });
+  });
+
+  describe('Error information disclosure — H14 fix', () => {
+    it('does not leak internal details in 500 errors', async () => {
+      // Trigger a route error by sending invalid data
+      const res = await request(app)
+        .post('/api/analyze')
+        .send({ genre: 'x'.repeat(100), style: '', rhythm: '', notation: '' });
+      // Should fail with 400 (field too long), not leak internal state
+      expect(res.status).toBe(400);
+      expect(res.body.error).not.toMatch(/provider|model|token|api_key|secret|stack/i);
+    });
+  });
+
+  describe('Stem upload field name and validation — H2 fix', () => {
+    it('rejects request with wrong field name', async () => {
+      const tmpFile = path.join(os.tmpdir(), 'test.wav');
+      fs.writeFileSync(tmpFile, 'RIFF....WAVE....');
+      try {
+        const res = await request(app)
+          .post('/api/stems/separate')
+          .attach('file', tmpFile);  // Server expects 'audio', not 'file'
+        // Wrong field name triggers multer error or rate limit
+        expect([400, 429, 500]).toContain(res.status);
+      } catch (err: unknown) {
+        // ECONNRESET is acceptable — multer may abort
+        expect((err as Error).message).toMatch(/ECONNRESET|socket/);
+      } finally {
+        try { fs.unlinkSync(tmpFile); } catch { /* */ }
+      }
+    });
+
+    it('rejects a file with wrong magic bytes as invalid audio', async () => {
+      const tmpFile = path.join(os.tmpdir(), 'fake.mp3');
+      fs.writeFileSync(tmpFile, 'not an audio file');
+      try {
+        const res = await request(app)
+          .post('/api/stems/separate')
+          .attach('audio', tmpFile);
+        // Should be rejected — magic bytes don't match valid audio
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/magic bytes|valid audio/i);
+      } catch (err: unknown) {
+        // ECONNRESET also acceptable (multer may abort)
+        expect((err as Error).message).toMatch(/ECONNRESET|socket/);
+      } finally {
+        try { fs.unlinkSync(tmpFile); } catch { /* */ }
+      }
+    });
+  });
+});
