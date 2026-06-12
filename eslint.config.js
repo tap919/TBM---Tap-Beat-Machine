@@ -54,6 +54,8 @@ export default [
       "react-hooks/immutability": "warn",
       // Downgrade set-state-in-effect (valid pattern for initial data fetch)
       "react-hooks/set-state-in-effect": "warn",
+      // TypeScript handles undefined variables/browser types more accurately
+      "no-undef": "off",
     },
     settings: {
       react: {

@@ -328,8 +328,8 @@ export function VinylScratchPro({
   const [deckBDrive, setDeckBDrive] = useState(0);
 
   // Vinyl simulation (Deck B)
-  const [deckBInertia] = useState(72);
-  const [deckBFriction] = useState(85);
+  const [deckBInertia, _setDeckBInertia] = useState(72);
+  const [deckBFriction, _setDeckBFriction] = useState(85);
   const [deckBVinylNoise, setDeckBVinylNoise] = useState(0);
   const [deckBPitchDrift, setDeckBPitchDrift] = useState(0);
   const [deckBWear, setDeckBWear] = useState(0);

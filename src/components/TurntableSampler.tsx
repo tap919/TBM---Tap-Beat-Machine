@@ -305,7 +305,7 @@ export function TurntableSampler({ onGoToDrums }: TurntableSamplerProps = {}) {
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [autoSliceCount, setAutoSliceCount] = useState(8);
   const [sensitivity, setSensitivity] = useState(50);
-  const [slicePlayModes, setSlicePlayModes] = useState<SlicePlayMode[]>([]);
+  const [slicePlayModes, _setSlicePlayModes] = useState<SlicePlayMode[]>([]);
   const [globalSliceMode, setGlobalSliceMode] = useState<SlicePlayMode>("one-shot");
   const [savedPrograms, setSavedPrograms] = useState<SliceProgram[]>(() => {
     const stored = localStorage.getItem('tbm_slice_programs');

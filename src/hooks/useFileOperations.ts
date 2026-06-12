@@ -47,7 +47,11 @@ export function useFileOperations(options: UseFileOperationsOptions) {
           { audio: getDefaultAudioSettings(), midi: getDefaultMidiSettings(), ui: getDefaultUISettings() },
         );
         exportState(state);
-        saveState(state, false);
+        const saved = saveState(state, false);
+        if (!saved) {
+          showNotification("error", "Save failed: storage is full");
+          return;
+        }
         showNotification("success", "PROJECT SAVED");
       } catch (error) {
         logger.error("Project save failed", error as Error);
@@ -75,7 +79,7 @@ export function useFileOperations(options: UseFileOperationsOptions) {
           padUpdates.forEach((padUpdate, index) => {
             if (padUpdate) {
               updatePad(index, padUpdate);
-              if (padUpdate.sample?.dataUri) {
+              if (padUpdate.sample?.dataUri && padUpdate.sample.dataUri.startsWith("data:")) {
                 fetch(padUpdate.sample.dataUri).then((res) => res.blob()).then((blob) => {
                   const file = new File([blob], padUpdate.sample!.name || "sample.wav", { type: "audio/wav" });
                   loadSampleToPad?.(index, file).catch((e) => logger.warn(`Failed to load saved sample for pad ${index}:`, e));

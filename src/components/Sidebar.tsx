@@ -81,6 +81,7 @@ export const Sidebar = React.memo(function Sidebar({
       label: "Save",
       title: "Save Program",
       onClick: onSave ?? (() => {}),
+      disabled: !onSave,
     },
   ] as const;
 
@@ -216,28 +217,33 @@ export const Sidebar = React.memo(function Sidebar({
           aria-label="File actions"
         >
           {/* eslint-disable-next-line react-hooks/refs */}
-          {FOOTER_ITEMS.map((btn) => (
-            <button
-              key={btn.label}
-              aria-label={btn.title}
-              onClick={btn.onClick}
-              onKeyDown={(e) => {
-                if (e.key === " " || e.key === "Enter") {
-                  e.preventDefault();
-                  btn.onClick();
-                }
-              }}
-              tabIndex={0}
-              className="w-full flex flex-col items-center gap-1 py-2.5 text-neutral-600 hover:text-neutral-300 hover:bg-neutral-800/50 rounded-xl transition-all duration-150 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-            >
-              <span className="group-hover:scale-110 transition-transform duration-150">
-                <btn.Icon size={17} />
-              </span>
-              <span className="text-xs font-bold uppercase tracking-wide leading-none text-neutral-600 group-hover:text-neutral-400">
-                {btn.label}
-              </span>
-            </button>
-          ))}
+          {FOOTER_ITEMS.map((btn) => {
+            const isDisabled = 'disabled' in btn && (btn as any).disabled;
+            const cls = isDisabled ? 'text-neutral-700 cursor-not-allowed' : 'text-neutral-600 hover:text-neutral-300 hover:bg-neutral-800/50';
+            return (
+              <button
+                key={btn.label}
+                aria-label={btn.title}
+                disabled={isDisabled}
+                onClick={btn.onClick}
+                onKeyDown={(e) => {
+                  if (e.key === " " || e.key === "Enter") {
+                    e.preventDefault();
+                    if (!isDisabled) btn.onClick();
+                  }
+                }}
+                tabIndex={0}
+                className={`w-full flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all duration-150 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${cls}`}
+              >
+                <span className={`transition-transform duration-150 ${isDisabled ? '' : 'group-hover:scale-110'}`}>
+                  <btn.Icon size={17} />
+                </span>
+                <span className={`text-xs font-bold uppercase tracking-wide leading-none ${isDisabled ? 'text-neutral-700' : 'text-neutral-600 group-hover:text-neutral-400'}`}>
+                  {btn.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </nav>
     </>

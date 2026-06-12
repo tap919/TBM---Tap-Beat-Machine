@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { Sequencer, Pad } from "../lib/TBMAudioEngine";
 
 export interface FullProjectSnapshot {
@@ -33,13 +33,16 @@ export function useProjectUndoRedo(options: UseUndoRedoOptions) {
   const [redoStack, setRedoStack] = useState<FullProjectSnapshot[]>([]);
 
   const padsRef = useRef(pads);
-  padsRef.current = pads;
   const undoPadsRef = useRef(setPads);
-  undoPadsRef.current = setPads;
   const undoSeqRef = useRef(sequencer);
-  undoSeqRef.current = sequencer;
   const undoSetBpmRef = useRef(setBpm);
-  undoSetBpmRef.current = setBpm;
+
+  useEffect(() => {
+    padsRef.current = pads;
+    undoPadsRef.current = setPads;
+    undoSeqRef.current = sequencer;
+    undoSetBpmRef.current = setBpm;
+  }, [pads, setPads, sequencer, setBpm]);
 
   const projectKey = snapshot.key;
   const activeState = snapshot.abState;

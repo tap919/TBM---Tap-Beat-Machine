@@ -143,7 +143,7 @@ export function getModeMappings(modeId?: string): Record<string, MidiMapping> {
   return result;
 }
 
-export function getModeFunctionIds(modeId?: string): string[] {
+export function getModeFunctionIds(_modeId?: string): string[] {
   return [...TBM_FUNCTION_IDS];
 }
 

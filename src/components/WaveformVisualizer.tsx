@@ -89,7 +89,6 @@ const WaveformBars = React.memo(function WaveformBars({
 export const WaveformVisualizer = React.memo(function WaveformVisualizer() {
   const [isDragging, setIsDragging] = useState(false);
   const [isChopped, setIsChopped] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [lofiMode, _setLofiMode] = useState(false);
   const [pitch, setPitch] = useState(0);
   const [filter, setFilter] = useState(100);

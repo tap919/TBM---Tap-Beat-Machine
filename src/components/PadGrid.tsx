@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, Upload, Ban, Filter } from "lucide-react";
+import { Upload, Ban, Filter } from "lucide-react";
 import type { Pad } from "../lib/TBMAudioEngine";
 
 interface PadItem {

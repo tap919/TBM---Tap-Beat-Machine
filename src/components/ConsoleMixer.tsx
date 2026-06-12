@@ -289,12 +289,8 @@ const ChannelStrip = memo(function ChannelStrip({ slot, index }: ChannelStripPro
   const faderRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startPct: number } | null>(null);
   const listenersRef = useRef<{ m: (e: MouseEvent) => void; u: () => void } | null>(null);
-  const [faderPct, setFaderPct] = useState(() => gainToFaderPct(slot.volume));
-
-  // Sync fader with external changes
-  useEffect(() => {
-    setFaderPct(gainToFaderPct(slot.volume));
-  }, [slot.volume]);
+  const [dragPct, setDragPct] = useState<number | null>(null);
+  const faderPct = dragPct ?? gainToFaderPct(slot.volume);
 
   useEffect(() => {
     return () => {
@@ -307,17 +303,19 @@ const ChannelStrip = memo(function ChannelStrip({ slot, index }: ChannelStripPro
 
   const handleFaderMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    dragRef.current = { startY: e.clientY, startPct: faderPct };
+    const startPct = gainToFaderPct(slot.volume);
+    dragRef.current = { startY: e.clientY, startPct };
 
     const onMove = (ev: MouseEvent) => {
       if (!dragRef.current) return;
       const delta = (dragRef.current.startY - ev.clientY) * 0.5;
       const pct = Math.max(0, Math.min(100, dragRef.current.startPct + delta));
-      setFaderPct(pct);
+      setDragPct(pct);
       trackRouter.setVolume(index, faderPctToGain(pct));
     };
     const onUp = () => {
       dragRef.current = null;
+      setDragPct(null);
       listenersRef.current = null;
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
@@ -325,7 +323,7 @@ const ChannelStrip = memo(function ChannelStrip({ slot, index }: ChannelStripPro
     listenersRef.current = { m: onMove, u: onUp };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  }, [faderPct, index, trackRouter]);
+  }, [index, trackRouter, slot.volume]);
 
   const isEmpty = slot.type === 'empty';
 
@@ -755,8 +753,6 @@ export const ConsoleMixer = memo(function ConsoleMixer() {
   // Subscribe to TrackRouter for live updates
   useEffect(() => {
     const unsub = trackRouter.subscribe((newSlots) => setSlots(newSlots));
-    // Sync immediately in case slots changed between render and effect
-    setSlots(trackRouter.slots);
     return unsub;
   }, [trackRouter]);
 

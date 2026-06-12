@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React, { useState, useEffect } from "react";
 import { UploadCloud } from "lucide-react";
 
 interface VinylDeckProps {
@@ -30,6 +30,17 @@ export function VinylDeck({
   onDragLeave,
   onDrop,
 }: VinylDeckProps) {
+  const [platAngle, setPlatAngle] = useState(0);
+  useEffect(() => {
+    if (activeMode !== "turntable") return;
+    let rafId: number;
+    const sync = () => {
+      setPlatAngle(platAngleRef.current);
+      rafId = requestAnimationFrame(sync);
+    };
+    rafId = requestAnimationFrame(sync);
+    return () => cancelAnimationFrame(rafId);
+  }, [activeMode]);
   return (
     <div
       className={`relative aspect-square rounded-2xl border-2 transition-all overflow-hidden flex items-center justify-center noise-texture ${
@@ -45,14 +56,14 @@ export function VinylDeck({
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-2 bg-bg-main/90 z-10">
           <UploadCloud className="w-10 h-10 text-brand animate-pulse" />
           <span className="text-sm font-bold text-brand uppercase tracking-widest">Drop Audio File</span>
-          <span className="text-xs text-neutral-500">Left side → Deck A • Right side → Deck B</span>
+          <span className="text-xs text-neutral-500">Left side â†’ Deck A â€¢ Right side â†’ Deck B</span>
         </div>
       )}
       <div
         ref={platterDomRef}
         className="w-56 h-56 rounded-full border-4 border-neutral-700/50 flex items-center justify-center"
         style={{
-          transform: activeMode === "turntable" ? `rotate(${platAngleRef.current}deg)` : undefined,
+          transform: activeMode === "turntable" ? `rotate(${platAngle}deg)` : undefined,
           transition: activeMode === "turntable" ? "none" : undefined,
           animation: isPlaying && activeMode !== "turntable" ? "spin 2s linear infinite" : "none",
         }}
@@ -68,7 +79,7 @@ export function VinylDeck({
       {activeMode === "turntable" && (
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1 pointer-events-none">
           <div className="text-xs font-mono text-brand uppercase">{vinylRpm} RPM</div>
-          <div className="text-xs font-mono text-neutral-500 uppercase">{speedMult.toFixed(2)}×</div>
+          <div className="text-xs font-mono text-neutral-500 uppercase">{speedMult.toFixed(2)}Ã—</div>
         </div>
       )}
       {!selectedSample && !isDragging && (
@@ -84,9 +95,10 @@ export function VinylDeck({
         <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-xs font-bold uppercase ${
           liveDirection === "forward" ? "bg-indicator/20 text-indicator" : "bg-red-500/20 text-red-400"
         }`}>
-          {liveDirection === "forward" ? "▶ Forward" : "◀ Reverse"}
+          {liveDirection === "forward" ? "â–¶ Forward" : "â—€ Reverse"}
         </div>
       )}
     </div>
   );
 }
+

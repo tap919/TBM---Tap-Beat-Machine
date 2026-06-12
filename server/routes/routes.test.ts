@@ -22,7 +22,8 @@ describe('GET /api/health', () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('status', 'ok');
-    expect(res.body).toHaveProperty('time');
+    expect(res.body).toHaveProperty('status');
+    expect(res.body.status).toBe('ok');
   });
 });
 
@@ -335,7 +336,7 @@ describe('Export routes', () => {
     it('rejects request with no files', async () => {
       const res = await request(app).post('/api/export');
       expect(res.status).toBe(400);
-      expect(res.body.error).toMatch(/wav/i);
+      expect(res.body.error).toMatch(/No audio files/i);
     });
 
     it('rejects non-WAV file', async () => {

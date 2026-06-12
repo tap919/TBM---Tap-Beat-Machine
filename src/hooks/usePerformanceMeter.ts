@@ -1,14 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 
 export function usePerformanceMeter() {
   const [cpuPct, setCpuPct] = useState(0);
   const [ramStr, setRamStr] = useState("N/A");
   const rafMeterRef = useRef<number | null>(null);
-  const lastRafTimeRef = useRef<number>(performance.now());
+  const lastRafTimeRef = useRef<number>(0);
   const lastCpuRef = useRef<number>(0);
   const lastRamRef = useRef<string>("N/A");
 
   useEffect(() => {
+    lastRafTimeRef.current = performance.now();
     const tick = (now: number) => {
       const delta = now - lastRafTimeRef.current;
       lastRafTimeRef.current = now;
@@ -38,3 +39,4 @@ export function usePerformanceMeter() {
 
   return { cpuPct, ramStr };
 }
+

@@ -37,19 +37,29 @@ function makeId() {
 // recreated (new sampleRate or new context), cached buffers from the old
 // context are never reused — reusing them causes NotSupportedError on
 // source.start() and silently kills all hat playback.
-const NOISE_BUFFER_CACHE = new Map<string, AudioBuffer>();
+const NOISE_BUFFER_CACHE = new WeakMap<AudioContext, Map<string, AudioBuffer>>();
+const MAX_CACHE_ENTRIES = 16;
 
 function getNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer {
-  // Key by sample count (rounded to avoid cache fragmentation)
   const samples = Math.ceil(ctx.sampleRate * duration);
   const cacheKey = `${ctx.sampleRate}:${samples}`;
-  const cached = NOISE_BUFFER_CACHE.get(cacheKey);
+  let perCtx = NOISE_BUFFER_CACHE.get(ctx);
+  if (!perCtx) {
+    perCtx = new Map();
+    NOISE_BUFFER_CACHE.set(ctx, perCtx);
+  }
+  const cached = perCtx.get(cacheKey);
   if (cached) return cached;
 
   const buf = ctx.createBuffer(1, samples, ctx.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < samples; i++) data[i] = Math.random() * 2 - 1;
-  NOISE_BUFFER_CACHE.set(cacheKey, buf);
+
+  if (perCtx.size >= MAX_CACHE_ENTRIES) {
+    const firstKey = perCtx.keys().next().value;
+    if (firstKey !== undefined) perCtx.delete(firstKey);
+  }
+  perCtx.set(cacheKey, buf);
   return buf;
 }
 

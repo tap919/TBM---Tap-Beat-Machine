@@ -13,7 +13,7 @@ interface MPCTransportProps {
   onStop: () => void;
   onRecord?: () => void;
   onLoopToggle?: () => void;
-  onTapTempo?: () => void;
+  onTapTempo?: (bpm: number) => void;
   onMetronomeToggle?: () => void;
   onQuantize?: () => void;
   metronomeEnabled?: boolean;
@@ -51,7 +51,7 @@ export const MPCTransport = ({
 
   const handleTapTempo = useCallback(() => {
     const now = Date.now();
-    const newTapTimes = [...tapTimes, now].slice(-4); // Keep last 4 taps
+    const newTapTimes = [...tapTimes, now].slice(-4);
     setTapTimes(newTapTimes);
 
     if (newTapTimes.length >= 2) {
@@ -61,10 +61,7 @@ export const MPCTransport = ({
       }
       const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
       const calculatedBpm = Math.round(60000 / avgInterval);
-      
-      // You would typically call a setBpm function here
-      console.log(`Tap tempo: ${calculatedBpm} BPM`);
-      if (onTapTempo) onTapTempo();
+      if (onTapTempo) onTapTempo(calculatedBpm);
     }
   }, [tapTimes, onTapTempo]);
 

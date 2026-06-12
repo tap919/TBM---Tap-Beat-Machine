@@ -21,6 +21,7 @@ export interface TrackSlot {
   eqHigh: { gain: number };
   eqMid: { gain: number };
   eqLow: { gain: number };
+  sourceId?: string;
 }
 
 export const TRACK_TYPE_LABELS: Record<string, string> = {
@@ -93,6 +94,14 @@ export class TrackRouter {
   }
 
   connectAudio(ctx: AudioContext, masterBus: GainNode): void {
+    // Dispose any previously created slot nodes before reconnecting
+    this.slotNodes.forEach((nodes) => {
+      try { nodes.gain.disconnect(); } catch { /* */ }
+      try { nodes.pan.disconnect(); } catch { /* */ }
+      try { nodes.analyser.disconnect(); } catch { /* */ }
+    });
+    this.slotNodes.clear();
+
     this.masterGain = masterBus;
     for (let i = 0; i < this.slots.length; i++) {
       const slot = this.slots[i];
@@ -185,11 +194,12 @@ export class TrackRouter {
     this.slots[idx].occupied = true;
     this.slots[idx].type = type;
     this.slots[idx].name = name;
+    this.slots[idx].sourceId = String(source);
     this.notify();
     return { index: idx };
   }
 
-  assignToChannel(channel: number, type: string, name: string, sourceName?: string): void {
+  assignToChannel(channel: number, type: string, name: string, _sourceName?: string): void {
     if (channel >= 0 && channel < this.slots.length) {
       this.slots[channel].occupied = true;
       this.slots[channel].type = type as TrackContentType;
@@ -199,17 +209,26 @@ export class TrackRouter {
   }
 
   releaseBySource(source: unknown): void {
-    // Release any slot associated with the given source
-    // For simplicity, find the first occupied slot and release it
-    const idx = this.slots.findIndex((s) => s.occupied);
-    if (idx !== -1) {
-      this.slots[idx].occupied = false;
-      this.slots[idx].type = "empty";
-      this.slots[idx].gainNode = null;
-      this.slots[idx].panNode = null;
+    const sourceStr = String(source);
+    const idx = this.slots.findIndex((s) => s.sourceId === sourceStr && s.occupied);
+    if (idx === -1) return;
+
+    // Disconnect audio nodes for this slot
+    const nodes = this.slotNodes.get(idx);
+    if (nodes) {
+      try { nodes.gain.disconnect(); } catch { /* */ }
+      try { nodes.pan.disconnect(); } catch { /* */ }
+      try { nodes.analyser.disconnect(); } catch { /* */ }
       this.slotNodes.delete(idx);
-      this.notify();
     }
+
+    this.slots[idx].occupied = false;
+    this.slots[idx].type = "empty";
+    this.slots[idx].sourceId = undefined;
+    this.slots[idx].gainNode = null;
+    this.slots[idx].panNode = null;
+
+    this.notify();
   }
 
   setSlotVolume(index: number, volume: number): void {

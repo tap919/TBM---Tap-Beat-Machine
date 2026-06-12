@@ -1,29 +1,68 @@
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Build
+dist/
+.vite/
+native/build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/uploads/
+data/stems/
+
+# Python (Demucs)
 Lib/
 Scripts/
 Include/
 Big-Homie-Python/
-audio/
-dist/
-.vite/
-*.pyc
 __pycache__/
-data/*.db
-data/*.db-shm
-data/*.db-wal
+*.pyc
+audio/
 
-# Environment
-.env
-
-# Build artifacts
+# Misc artifacts
 lint-results.json
-*.log
-native/build/
-
-# Runtime data (uploads, stems)
-data/uploads/
-data/stems/
-
-# Scratchpads / internal docs
 gemini-slate-4-manual.txt
 FINAL_AUDIT.md
+
+# Native addon
+native/build/
+native/.node-gyp/

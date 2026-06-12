@@ -335,7 +335,7 @@ function runDemucs(job: StemJob, audioPath: string): void {
       if (/urlopen error|No address associated|ConnectionRefusedError|network/i.test(stderr)) {
         job.error = `Model "${job.model}" could not be downloaded. Demucs fetches model weights (~300 MB) from dl.fbaipublicfiles.com on first use. Please ensure the server has internet access to that host, then retry.`;
       } else {
-        job.error = stderr.slice(-800).trim() || `Demucs exited with code ${code}`;
+        job.error = stderr.slice(-800).trim().replace(/[/\\][^\s/\\]+[/\\][^\s/\\]+/g, ' [path redacted]') || `Demucs exited with code ${code}`;
       }
       patchJob(job.id, { status: 'error', error: job.error });
       // Clean up the upload file and its directory

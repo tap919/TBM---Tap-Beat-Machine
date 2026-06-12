@@ -271,15 +271,19 @@ export const ChordBuilder = React.memo(function ChordBuilder() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const slotIndexRef = useRef(0);
   const slotsRef = useRef(slots);
-  slotsRef.current = slots;
   const voicingsRef = useRef(voicings);
-  voicingsRef.current = voicings;
 
   // Sound preview engine (from shared context)
   const previewEngineRef = useRef<SoundPreviewEngine | null>(null);
-  previewEngineRef.current = previewEngine ?? null;
   const previewVoiceRef = useRef(previewVoice);
-  previewVoiceRef.current = previewVoice;
+
+  // Sync refs in effect to avoid concurrent-mode render discard issues
+  useEffect(() => {
+    slotsRef.current = slots;
+    voicingsRef.current = voicings;
+    previewEngineRef.current = previewEngine ?? null;
+    previewVoiceRef.current = previewVoice;
+  }, [slots, voicings, previewEngine, previewVoice]);
 
   // ── Auto-register in TrackRouter (mixer channel) ────────────────────────
   const chordSlotIndexRef = useRef<number>(-1);
@@ -473,7 +477,7 @@ export const ChordBuilder = React.memo(function ChordBuilder() {
       setSendFeedback('No free tracks available');
     }
     setTimeout(() => setSendFeedback(null), 2500);
-  }, [slots, voicings, activeRhythm, previewVoice, contextBpm]);
+  }, [slots, voicings, activeRhythm, previewVoice, contextBpm, trackRouter]);
 
   // ── Mini keyboard display for chord preview ──
   const renderMiniKeyboard = (chord: ChordDef | null, voicing?: SlotVoicing) => {

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Knob } from './Knob';
-import { Save, Upload, Download, Play, RotateCcw, Plus, X, ChevronRight } from 'lucide-react';
+import { Save, Play, X, ChevronRight } from 'lucide-react';
 
 export interface MacroSnapshot {
   id: string;

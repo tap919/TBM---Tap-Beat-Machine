@@ -72,7 +72,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
         deserialized.pads.forEach((padUpdate, index) => {
           if (padUpdate) {
             updatePad(index, padUpdate);
-            if (padUpdate.sample?.dataUri) {
+            if (padUpdate.sample?.dataUri && padUpdate.sample.dataUri.startsWith("data:")) {
               fetch(padUpdate.sample.dataUri)
                 .then((res) => res.blob())
                 .then((blob) => {

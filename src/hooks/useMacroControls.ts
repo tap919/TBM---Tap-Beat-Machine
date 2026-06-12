@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 export interface MacroSnapshot {
   id: string;
@@ -44,10 +44,26 @@ export function useMacroControls() {
     [snapshots, handleMacroChange],
   );
 
+  const morphRafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (morphRafRef.current !== null) cancelAnimationFrame(morphRafRef.current);
+    };
+  }, []);
+
+  const cancelMorph = useCallback(() => {
+    if (morphRafRef.current !== null) {
+      cancelAnimationFrame(morphRafRef.current);
+      morphRafRef.current = null;
+    }
+  }, []);
+
   const handleMorphToSnapshot = useCallback(
     (id: string, duration: number) => {
       const snap = snapshots.find((s) => s.id === id);
       if (!snap) return;
+      cancelMorph();
       const startValues = [...macroValues];
       const targetValues = snap.values;
       const startTime = performance.now();
@@ -57,15 +73,20 @@ export function useMacroControls() {
         const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
         const newValues = startValues.map((sv, i) => sv + (targetValues[i] - sv) * eased);
         setMacroValues(newValues);
-        if (t < 1) requestAnimationFrame(morph);
+        if (t < 1) {
+          morphRafRef.current = requestAnimationFrame(morph);
+        } else {
+          morphRafRef.current = null;
+        }
       };
-      requestAnimationFrame(morph);
+      morphRafRef.current = requestAnimationFrame(morph);
     },
-    [macroValues, snapshots],
+    [macroValues, snapshots, cancelMorph],
   );
 
   return {
     macroValues, snapshots,
     handleMacroChange, handleSaveSnapshot, handleLoadSnapshot, handleMorphToSnapshot,
+    cancelMorph,
   };
 }

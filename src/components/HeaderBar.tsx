@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Settings, ChevronDown, AlertCircle, FilePlus, Save, FileAudio,
+  Settings, ChevronDown, FilePlus, Save, FileAudio,
   Undo2, Redo2, RotateCcw, ZapOff, Download, Music, Activity,
-  ChevronUp, Piano as PianoIcon,
 } from "lucide-react";
 import { NOTE_NAMES } from "../lib/constants";
 import { HeaderIOMeters } from "./AudioMeters";
-import type { Notification } from "../hooks/useNotifications";
 
 interface Props {
   projectKey: string;
@@ -37,7 +35,7 @@ interface Props {
 export function HeaderBar({
   projectKey, activeState, workspaceMode, cpuPct, ramStr,
   isAutoSaving, lastSavedAt, activeTab, undoStack, redoStack,
-  bSnapshotRef, analyserNode,
+  bSnapshotRef: _bSnapshotRef, analyserNode,
   onSetProjectKey, onSetActiveState, onSetWorkspaceMode, onSetActiveTab,
   onUndo, onRedo, onPanic, onExport, onNewProject, onSave, onCopyAToB,
 }: Props) {

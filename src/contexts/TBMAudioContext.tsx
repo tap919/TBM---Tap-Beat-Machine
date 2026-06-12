@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   createContext,
   useContext,
   useState,
@@ -39,78 +39,78 @@ import {
 } from "../lib/TBMAudioEngine";
 import { TrackRouter } from "../lib/trackRouter";
 import { SoundPreviewEngine } from "../lib/soundPreview";
-import { disposeGlobalMidiHandler } from "../lib/midiHandler";
+import { disposeGlobalMidiHandler, initializeGlobalMidiHandler } from "../lib/midiHandler";
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Context value type
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface TBMAudioContextValue {
-  /** Shared TBMAudioEngine — sample playback, trigger, analyser */
+  /** Shared TBMAudioEngine â€” sample playback, trigger, analyser */
   engine: TBMAudioEngine | null;
-  /** Shared SynthEngine — piano roll synth voices */
+  /** Shared SynthEngine â€” piano roll synth voices */
   synth: SynthEngine | null;
-  /** Shared Sequencer — step-sequencer clock + pattern playback */
+  /** Shared Sequencer â€” step-sequencer clock + pattern playback */
   sequencer: Sequencer | null;
   /** Raw AudioContext for components that need direct access (HatSequencer) */
   audioContext: AudioContext | null;
 
-  // ── Pad state (single source of truth for all 64 pads across 4 banks) ──
+  // â”€â”€ Pad state (single source of truth for all 64 pads across 4 banks) â”€â”€
   pads: Pad[];
   setPads: (pads: Pad[]) => void;
   updatePad: (padIndex: number, patch: Partial<Pad>) => void;
 
-  // ── Sample loading (loads into the shared engine + updates the pad) ──
+  // â”€â”€ Sample loading (loads into the shared engine + updates the pad) â”€â”€
   loadSampleToPad: (padIndex: number, file: File) => Promise<void>;
 
-  // ── Transport ──
+  // â”€â”€ Transport â”€â”€
   triggerPad: (pad: Pad, velocity?: number) => void;
 
-  // ── BPM (single source of truth for sequencer clock) ──
+  // â”€â”€ BPM (single source of truth for sequencer clock) â”€â”€
   bpm: number;
   setBpm: (bpm: number) => void;
 
-  // ── AudioContext error state ──
+  // â”€â”€ AudioContext error state â”€â”€
   audioError: string | null;
   /** Attempt to resume a suspended AudioContext (iOS autoplay, etc.) */
   resumeAudio: () => Promise<void>;
 
-  // ── Mute / Solo → Sequencer ──
+  // â”€â”€ Mute / Solo â†’ Sequencer â”€â”€
   /** Push mute/solo state from DrumMachine to Sequencer for playback gating */
   setSequencerMuteState: (muteMap: boolean[], soloSet: Set<number>) => void;
 
-  // ── Engine analyser access (for SpectrumAnalyzer) ──
+  // â”€â”€ Engine analyser access (for SpectrumAnalyzer) â”€â”€
   /** Returns the engine's persistent AnalyserNode, or null if engine not ready */
   getEngineAnalyser: () => AnalyserNode | null;
 
-  // ── MIDI access (shared across components) ──
+  // â”€â”€ MIDI access (shared across components) â”€â”€
   midiAccess: MIDIAccess | null;
 
-  // ── Project key (e.g. "Cm", "G#M") ──
+  // â”€â”€ Project key (e.g. "Cm", "G#M") â”€â”€
   projectKey: string;
   setProjectKey: (key: string) => void;
 
-  // ── Engine log ──
+  // â”€â”€ Engine log â”€â”€
   engineLog: string[];
   addLog: (entry: string) => void;
 
-  // ── Engine reinitialization (after sample rate / buffer size change) ──
+  // â”€â”€ Engine reinitialization (after sample rate / buffer size change) â”€â”€
   reinitializeEngine: () => void;
 
-  // ── Native audio output (ASIO/WASAPI/DirectSound/CoreAudio via RtAudio) ──
-  /** NativeAudioOutput manager — null if not yet initialized */
+  // â”€â”€ Native audio output (ASIO/WASAPI/DirectSound/CoreAudio via RtAudio) â”€â”€
+  /** NativeAudioOutput manager â€” null if not yet initialized */
   nativeOutput: NativeAudioOutput | null;
 
-  // ── DJ Engine ──
-  /** DJ Engine instance — dual decks, crossfader, effects, scratch, vinyl sim */
+  // â”€â”€ DJ Engine â”€â”€
+  /** DJ Engine instance â€” dual decks, crossfader, effects, scratch, vinyl sim */
   djEngine: DJEngine | null;
 
-  // ── Shared Track Router (mixer channel assignments) ──
-  /** TrackRouter — shared registry for mixer channel slot assignments */
+  // â”€â”€ Shared Track Router (mixer channel assignments) â”€â”€
+  /** TrackRouter â€” shared registry for mixer channel slot assignments */
   trackRouter: TrackRouter;
 
-  // ── Shared Sound Preview Engine (audition synthesizer) ──
-  /** SoundPreviewEngine — audition synth for chords/melodies before committing */
+  // â”€â”€ Shared Sound Preview Engine (audition synthesizer) â”€â”€
+  /** SoundPreviewEngine â€” audition synth for chords/melodies before committing */
   previewEngine: SoundPreviewEngine | null;
 
   /** Load an audio file into a DJ deck */
@@ -119,7 +119,7 @@ interface TBMAudioContextValue {
   loadUrlToDeck: (deck: "A" | "B", url: string) => Promise<AudioBuffer | null>;
 
   /** DJ deck transport controls */
-  // CTX-5: djPlay is async (needs context resume) — interface updated to match
+  // CTX-5: djPlay is async (needs context resume) â€” interface updated to match
   djPlay: (deck: "A" | "B") => Promise<void>;
   djPause: (deck: "A" | "B") => void;
   djStop: (deck: "A" | "B") => void;
@@ -195,9 +195,9 @@ interface TBMAudioContextValue {
 
 const TBMAudioCtx = createContext<TBMAudioContextValue | null>(null);
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Hook for consumers
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function useTBMAudio(): TBMAudioContextValue {
   const ctx = useContext(TBMAudioCtx);
@@ -206,9 +206,9 @@ export function useTBMAudio(): TBMAudioContextValue {
   return ctx;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Build default 64 pads (4 banks x 16)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function buildDefaultPads(count: number = TOTAL_PADS): Pad[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -234,9 +234,9 @@ function buildDefaultPads(count: number = TOTAL_PADS): Pad[] {
   }));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Provider
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
   const [engine, setEngine] = useState<TBMAudioEngine | null>(null);
@@ -256,10 +256,10 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
   // Keep a ref to pads so callbacks always see the latest
   const padsRef = useRef(pads);
 
-  // ── Shared TrackRouter (singleton, no AudioContext dependency) ──
+  // â”€â”€ Shared TrackRouter (singleton, no AudioContext dependency) â”€â”€
   const trackRouterRef = useRef<TrackRouter>(new TrackRouter());
 
-  // ── Shared SoundPreviewEngine (recreated when AudioContext changes) ──
+  // â”€â”€ Shared SoundPreviewEngine (recreated when AudioContext changes) â”€â”€
   const [previewEngine, setPreviewEngine] = useState<SoundPreviewEngine | null>(null);
   const previewEngineRef = useRef<SoundPreviewEngine | null>(null);
 
@@ -267,17 +267,17 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
   const djEngineRef = useRef<DJEngine | null>(null);
   // Native audio output ref for cleanup
   const nativeOutputRef = useRef<NativeAudioOutput | null>(null);
-  // Master bus GainNode ref — shared tap point for all engines
+  // Master bus GainNode ref â€” shared tap point for all engines
   const masterBusRef = useRef<GainNode | null>(null);
 
-  // ── Refs for engine instances — used in cleanup to avoid stale closures ──
+  // â”€â”€ Refs for engine instances â€” used in cleanup to avoid stale closures â”€â”€
   // CTX-1 fix: store the actual instances in refs so the cleanup effect
   // can dispose precisely what it created, regardless of React re-render order
   const engineRef = useRef<TBMAudioEngine | null>(null);
   const synthRef = useRef<SynthEngine | null>(null);
   const sequencerRef2 = useRef<Sequencer | null>(null);
 
-  // ── Sync pads to sequencer outside of setState updater (avoids double-render) ──
+  // â”€â”€ Sync pads to sequencer outside of setState updater (avoids double-render) â”€â”€
   const sequencerRef = useRef(sequencer);
 
   // Update refs after render to avoid updating during render
@@ -292,9 +292,9 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     sequencerRef.current?.setPads(pads);
   }, [pads]);
 
-  // ── Init engine + sequencer + synth + DJ engine once ──
+  // â”€â”€ Init engine + sequencer + synth + DJ engine once â”€â”€
   useEffect(() => {
-    // CTX-4: In React StrictMode, effects run twice (mount → unmount → mount).
+    // CTX-4: In React StrictMode, effects run twice (mount â†’ unmount â†’ mount).
     // The initialized.current guard prevents the second mount from creating
     // duplicate engines, but we also need the CLEANUP to run on the FIRST
     // unmount so the second mount starts clean. We track whether this specific
@@ -312,7 +312,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       const ctx = getTBMContext();
       const dj = createDJEngine();
 
-      // ── Master bus: shared GainNode that all engines route through ──
+      // â”€â”€ Master bus: shared GainNode that all engines route through â”€â”€
       // This enables NativeAudioOutput to capture the combined mix from
       // a single tap point rather than intercepting each engine individually.
       const bus = ctx.createGain();
@@ -327,10 +327,10 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       masterBusRef.current = bus;
 
       // Wire TrackRouter audio nodes to the master bus so each mixer
-      // channel slot has a real GainNode → StereoPannerNode → master path
+      // channel slot has a real GainNode â†’ StereoPannerNode â†’ master path
       trackRouterRef.current.connectAudio(ctx, bus);
 
-      // ── NativeAudioOutput: manages Web Audio → IPC → native driver ──
+      // â”€â”€ NativeAudioOutput: manages Web Audio â†’ IPC â†’ native driver â”€â”€
       const natOut = new NativeAudioOutput(ctx, bus);
       nativeOutputRef.current = natOut;
 
@@ -355,7 +355,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       logger.error("[TBMAudioProvider] Init error:", err instanceof Error ? err : new Error(String(err)));
     }
 
-    // ── MIDI access bootstrap ──
+    // â”€â”€ MIDI access bootstrap â”€â”€
     // CTX-11: track mount state so we don't call setState after unmount
     let midiMounted = true;
     if (typeof navigator !== "undefined" && "requestMIDIAccess" in navigator) {
@@ -380,7 +380,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       if (!thisInvocationOwnsEngines) return;
       initialized.current = false;
       // CTX-1: dispose via refs, not stale closure state values
-      // NativeAudioOutput.dispose() is async — fire-and-forget with error logging
+      // NativeAudioOutput.dispose() is async â€” fire-and-forget with error logging
       // (React cleanup callbacks must be synchronous).
       nativeOutputRef.current?.dispose().catch((e: unknown) => {
         console.warn('[TBMAudio] cleanup: nativeOutput dispose error', e);
@@ -399,7 +399,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);  
 
-  // ── Create / recreate SoundPreviewEngine when AudioContext or masterBus changes ──
+  // â”€â”€ Create / recreate SoundPreviewEngine when AudioContext or masterBus changes â”€â”€
   useEffect(() => {
     if (!audioContext) return;
     // Dispose previous engine if any
@@ -416,12 +416,12 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     };
   }, [audioContext]);
 
-  // ── Cleanup on true unmount ──
+  // â”€â”€ Cleanup on true unmount â”€â”€
   // CTX-1: The individual cleanup effect with [engine, sequencer, synth, djEngine]
   // deps was firing whenever ANY one changed, disposing ALL four. Removed in favour
   // of the ref-based cleanup inside the init effect above.
 
-  // ── Engine log helper (ring buffer of last 50 entries) ──
+  // â”€â”€ Engine log helper (ring buffer of last 50 entries) â”€â”€
   // CTX-17: avoid double-allocation; build the new entry string once and
   // use a single slice instead of spread-then-slice.
   const addLog = useCallback((entry: string) => {
@@ -434,8 +434,8 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // ── BPM callback + sync to sequencer ──
-  // CTX-16: validate bpm — reject NaN, zero, negative, and unreasonable values
+  // â”€â”€ BPM callback + sync to sequencer â”€â”€
+  // CTX-16: validate bpm â€” reject NaN, zero, negative, and unreasonable values
   const setBpm = useCallback((value: number) => {
     if (!Number.isFinite(value) || value <= 0 || value > 999) return;
     setBpmState(value);
@@ -445,13 +445,17 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     sequencer?.setBpm(bpm);
   }, [bpm, sequencer]);
 
-  // ── Engine reinitialization ──
+  // â”€â”€ Engine reinitialization â”€â”€
   // CTX-2/CTX-3: Use refs (not stale closure captures) to dispose, and also
   // reinitialize synth + djEngine which were previously left on a dead AudioContext.
   const reinitializeEngine = useCallback(() => {
     try {
+      // â”€â”€ Phase 1: capture sample data before disposing old instances â”€â”€
+      const sampleSnapshots = engineRef.current?.exportSampleBuffers() ?? [];
+      const currentPads = padsRef.current;
+
       // Dispose ALL old instances via refs (CTX-3: avoid stale `engine` closure)
-      // NativeAudioOutput.dispose() is async — fire-and-forget with error logging.
+      // NativeAudioOutput.dispose() is async â€” fire-and-forget with error logging.
       nativeOutputRef.current?.dispose().catch((e: unknown) => {
         console.warn('[TBMAudio] reinit: nativeOutput dispose error', e);
       });
@@ -471,7 +475,21 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       const ctx = getTBMContext();
       const dj = createDJEngine();
 
-      // ── Master bus: reroute all engines through shared tap point ──
+      // â”€â”€ Phase 2: restore sample data into new engine â”€â”€
+      if (sampleSnapshots.length > 0) {
+        eng.restoreSampleBuffers(sampleSnapshots);
+      }
+
+      // â”€â”€ Phase 3: update pad state to reference restored buffers â”€â”€
+      const sampleMap = eng.getSamples();
+      const restoredPads = currentPads.map(pad => {
+        if (pad.sample?.id && sampleMap.has(pad.sample.id)) {
+          return { ...pad, sample: { ...pad.sample, buffer: sampleMap.get(pad.sample.id)! } };
+        }
+        return pad;
+      });
+
+      // â”€â”€ Master bus: reroute all engines through shared tap point â”€â”€
       const bus = ctx.createGain();
       bus.gain.value = 1.0;
       bus.connect(ctx.destination);
@@ -483,11 +501,11 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       // Wire TrackRouter audio nodes to the new master bus
       trackRouterRef.current.connectAudio(ctx, bus);
 
-      // ── NativeAudioOutput ──
+      // â”€â”€ NativeAudioOutput â”€â”€
       const natOut = new NativeAudioOutput(ctx, bus);
       nativeOutputRef.current = natOut;
 
-      seq.setPads(padsRef.current);
+      seq.setPads(restoredPads);
 
       // Update refs first (CTX-3: keep refs current before state updates)
       engineRef.current = eng;
@@ -503,6 +521,11 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       setAudioContext(ctx);
       setNativeOutput(natOut);
       setAudioError(null);
+      setPadsState(restoredPads);
+      // Re-initialize MIDI handler after engine reinit (fixes M5)
+      initializeGlobalMidiHandler().catch((e: unknown) => {
+        console.warn('[TBMAudio] reinit: MIDI init error', e);
+      });
       addLog("Engine reinitialized");
     } catch (err) {
       const msg =
@@ -510,9 +533,9 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       setAudioError(msg);
       addLog(`Engine reinitialization error: ${msg}`);
     }
-  }, [addLog]); // CTX-3: no longer depends on stale `engine` — uses refs instead
+  }, [addLog]); // CTX-3: no longer depends on stale `engine` â€” uses refs instead
 
-  // ── Keep sequencer pad references in sync ──
+  // â”€â”€ Keep sequencer pad references in sync â”€â”€
   // NOTE: sequencer sync is handled by the useEffect above watching `pads`,
   // so we do NOT call sequencer.setPads() inside state updaters (avoids double-render).
   const setPads = useCallback((newPads: Pad[]) => {
@@ -520,7 +543,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updatePad = useCallback((padIndex: number, patch: Partial<Pad>) => {
-    // CTX-6: bounds check — silently ignore out-of-range indices
+    // CTX-6: bounds check â€” silently ignore out-of-range indices
     if (padIndex < 0 || padIndex >= TOTAL_PADS) {
       logger.warn(`[TBMAudioContext] updatePad: index ${padIndex} out of range`);
       return;
@@ -535,7 +558,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // ── Load a sample file into a specific pad ──
+  // â”€â”€ Load a sample file into a specific pad â”€â”€
   const loadSampleToPad = useCallback(
     async (padIndex: number, file: File) => {
       // CTX-7: bounds check
@@ -580,10 +603,10 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
         logger.error("[TBMAudioContext] loadSampleToPad failed:", err instanceof Error ? err : new Error(String(err)));
       }
     },
-    [], // CTX-12: no dependency on `engine` state — uses ref to avoid stale closures
+    [], // CTX-12: no dependency on `engine` state â€” uses ref to avoid stale closures
   );
 
-  // ── Trigger a pad through the shared engine ──
+  // â”€â”€ Trigger a pad through the shared engine â”€â”€
   const triggerPad = useCallback(
     (pad: Pad, velocity: number = 1) => {
       const eng = engineRef.current;
@@ -610,7 +633,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  // ── Resume suspended AudioContext ──
+  // â”€â”€ Resume suspended AudioContext â”€â”€
   const resumeAudio = useCallback(async () => {
     if (!audioContext) return;
     try {
@@ -625,7 +648,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, [audioContext]);
 
-  // ── Mute/Solo → Sequencer ──
+  // â”€â”€ Mute/Solo â†’ Sequencer â”€â”€
   const setSequencerMuteState = useCallback(
     (muteMap: boolean[], soloSet: Set<number>) => {
       sequencerRef.current?.setMuteState(muteMap, soloSet);
@@ -633,12 +656,12 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  // ── Engine analyser access ──
+  // â”€â”€ Engine analyser access â”€â”€
   const getEngineAnalyser = useCallback((): AnalyserNode | null => {
     return engineRef.current?.getAnalyser() ?? null;
   }, []);
 
-  // ── DJ Engine helpers ──
+  // â”€â”€ DJ Engine helpers â”€â”€
 
   const getDeck = useCallback((deck: "A" | "B"): DJDeck | null => {
     const dj = djEngineRef.current;
@@ -663,7 +686,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // ── DJ Load ──
+  // â”€â”€ DJ Load â”€â”€
 
   const loadFileToDeck = useCallback(
     async (deck: "A" | "B", file: File): Promise<AudioBuffer | null> => {
@@ -685,7 +708,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [getDeck, ensureContextRunning],
   );
 
-  // ── DJ Transport ──
+  // â”€â”€ DJ Transport â”€â”€
 
   const djPlay = useCallback(
     async (deck: "A" | "B") => {
@@ -716,7 +739,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [getDeck],
   );
 
-  // ── Crossfader ──
+  // â”€â”€ Crossfader â”€â”€
 
   const setCrossfaderPosition = useCallback((position: number) => {
     djEngineRef.current?.crossfader.setPosition(position);
@@ -726,7 +749,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     djEngineRef.current?.crossfader.setCurve(curve);
   }, []);
 
-  // ── Deck Volume / EQ / Rate ──
+  // â”€â”€ Deck Volume / EQ / Rate â”€â”€
 
   const setDeckVolume = useCallback(
     (deck: "A" | "B", volume: number) => {
@@ -756,7 +779,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [getDeck],
   );
 
-  // ── Scratch ──
+  // â”€â”€ Scratch â”€â”€
 
   const startScratchCb = useCallback(
     (deck: "A" | "B") => {
@@ -779,7 +802,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [getDeck],
   );
 
-  // ── Vinyl Simulation ──
+  // â”€â”€ Vinyl Simulation â”€â”€
 
   const setVinylConfig = useCallback(
     (deck: "A" | "B", config: Partial<VinylSimConfig>) => {
@@ -788,7 +811,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [getDeck],
   );
 
-  // ── Effects ──
+  // â”€â”€ Effects â”€â”€
 
   const setDeckEffect = useCallback(
     (
@@ -823,7 +846,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [getDeck],
   );
 
-  // ── Sync ──
+  // â”€â”€ Sync â”€â”€
 
   const enableSyncCb = useCallback((leader: "A" | "B" = "A") => {
     djEngineRef.current?.enableSync(leader);
@@ -833,7 +856,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     djEngineRef.current?.disableSync();
   }, []);
 
-  // ── Auto-Scratch ──
+  // â”€â”€ Auto-Scratch â”€â”€
 
   const renderAutoScratch = useCallback(
     async (
@@ -861,19 +884,19 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  // ── BPM Detection ──
+  // â”€â”€ BPM Detection â”€â”€
 
   const detectBpm = useCallback((buffer: AudioBuffer): number => {
     return BPMDetector.detect(buffer);
   }, []);
 
-  // ── DJ Master Volume ──
+  // â”€â”€ DJ Master Volume â”€â”€
 
   const setDJMasterVolume = useCallback((volume: number) => {
     djEngineRef.current?.setMasterVolume(volume);
   }, []);
 
-  // ── Cue Points ──
+  // â”€â”€ Cue Points â”€â”€
 
   const setDeckCuePoint = useCallback(
     (deck: "A" | "B", time?: number) => {
@@ -889,7 +912,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     [getDeck],
   );
 
-  // ── Loop ──
+  // â”€â”€ Loop â”€â”€
 
   const setDeckLoop = useCallback(
     (deck: "A" | "B", start: number, end: number) => {
@@ -904,6 +927,8 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
     },
     [getDeck],
   );
+
+  const trackRouter = trackRouterRef.current;
 
   const value = useMemo<TBMAudioContextValue>(
     () => ({
@@ -932,7 +957,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
       // DJ Engine
       djEngine,
       // Track Router & Sound Preview
-      trackRouter: trackRouterRef.current,
+      trackRouter,
       previewEngine,
       loadFileToDeck,
       loadUrlToDeck,
@@ -1023,3 +1048,7 @@ export function TBMAudioProvider({ children }: { children: React.ReactNode }) {
 
   return <TBMAudioCtx.Provider value={value}>{children}</TBMAudioCtx.Provider>;
 }
+
+
+
+

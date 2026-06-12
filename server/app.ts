@@ -19,7 +19,7 @@ import llmRouter from './routes/llm.js';
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 const apiLimiter = rateLimit({

@@ -166,6 +166,8 @@ export class TBMAudioEngine {
   private reverseBufferCache = new WeakMap<AudioBuffer, AudioBuffer>();
   private lfoNodes: OscillatorNode[] | null = null;
   private _sampleRate: number;
+  private padStartOffsets: Map<number, number> = new Map();
+  private padAdsrValues: Map<number, { a: number; d: number; s: number; r: number }> = new Map();
 
   constructor(context: AudioContext) {
     this._context = context;
@@ -236,11 +238,13 @@ export class TBMAudioEngine {
     source.buffer = sourceBuffer;
     source.playbackRate.value = pad.timeStretch ?? 1;
 
-    const startOffset = (pad.start ?? 0) * buffer.duration;
-    const duration = ((pad.end ?? 1) - (pad.start ?? 0)) * buffer.duration;
+    const padKey = typeof pad.id === "number" ? pad.id : 0;
+    const storedOffset = this.padStartOffsets.get(padKey) ?? pad.start ?? 0;
+    const startOffset = storedOffset * buffer.duration;
+    const endPos = (pad.end ?? 1) * buffer.duration;
+    const duration = endPos - startOffset;
     const scheduledTime = when ?? ctx.currentTime;
 
-    const padKey = typeof pad.id === "number" ? pad.id : 0;
     const routing = this.getOrCreatePadRouting(padKey);
     routing.lastVolume = pad.volume;
     routing.lastPan = pad.pan;
@@ -251,9 +255,26 @@ export class TBMAudioEngine {
     safeSetParam(routing.gain.gain, gainValue, scheduledTime);
     safeSetParam(routing.panner.pan, pad.pan, scheduledTime);
 
-    this.applyPadFilter(routing, pad);
+    // Apply ADSR envelope: insert per-source GainNode with scheduled ramps
+    const adsr = this.padAdsrValues.get(padKey) ?? {
+      a: pad.attack ?? 0.001,
+      d: 0.1,
+      s: 1.0,
+      r: pad.release ?? 0.1,
+    };
+    const voiceGain = ctx.createGain();
+    const startTime = scheduledTime;
+    const endTime = startTime + duration;
 
-    source.connect(routing.gain);
+    voiceGain.gain.setValueAtTime(0, startTime);
+    voiceGain.gain.linearRampToValueAtTime(1, startTime + adsr.a);
+    voiceGain.gain.setValueAtTime(Math.max(0.001, adsr.s), startTime + adsr.a + adsr.d);
+    // Release phase: ramp to 0 at end of sample duration
+    voiceGain.gain.linearRampToValueAtTime(0.0001, endTime);
+    voiceGain.gain.linearRampToValueAtTime(0, endTime + adsr.r);
+
+    source.connect(voiceGain);
+    voiceGain.connect(routing.gain);
 
     if (pad.loop) {
       source.loop = true;
@@ -352,19 +373,20 @@ export class TBMAudioEngine {
 
   setPadPan(padIndex: number, pan: number): void {
     const routing = this.getOrCreatePadRouting(padIndex);
-    routing.lastPan = pan;
-    safeSetParam(routing.panner.pan, pan, this._context.currentTime);
+    const clamped = Math.max(-1, Math.min(1, pan));
+    routing.lastPan = clamped;
+    safeSetParam(routing.panner.pan, clamped, this._context.currentTime);
   }
 
   setPadVolume(padIndex: number, volume: number): void {
     const routing = this.getOrCreatePadRouting(padIndex);
-    routing.lastVolume = volume;
-    safeSetParam(routing.gain.gain, volume, this._context.currentTime);
+    const clamped = Math.max(0, Math.min(1, volume));
+    routing.lastVolume = clamped;
+    safeSetParam(routing.gain.gain, clamped, this._context.currentTime);
   }
 
   setPadStartOffset(padIndex: number, offset: number): void {
-    // Stored for use on next triggerPad call
-    // The pad object passed to triggerPad carries start/end
+    this.padStartOffsets.set(padIndex, Math.max(0, Math.min(1, offset)));
   }
 
   setPadFilterCutoff(padIndex: number, cutoff: number): void {
@@ -416,6 +438,14 @@ export class TBMAudioEngine {
   }
 
   updatePadADSR(padIndex: number, adsr: { a: number; d: number; s: number; r: number }): void {
+    this.padAdsrValues.set(padIndex, {
+      a: Math.max(0, adsr.a),
+      d: Math.max(0, adsr.d),
+      s: Math.max(0, Math.min(1, adsr.s)),
+      r: Math.max(0, adsr.r),
+    });
+    // Full ADSR envelope application requires per-source GainNode routing
+    // which is not yet implemented. The values are stored here for future use.
     logger.debug(`updatePadADSR pad=${padIndex} a=${adsr.a} d=${adsr.d} s=${adsr.s} r=${adsr.r}`);
   }
 
@@ -431,6 +461,29 @@ export class TBMAudioEngine {
 
   getSamples(): Map<string, AudioBuffer> {
     return new Map(this.samples);
+  }
+
+  exportSampleBuffers(): Array<{ id: string; channels: Float32Array[]; sampleRate: number; length: number }> {
+    const result: Array<{ id: string; channels: Float32Array[]; sampleRate: number; length: number }> = [];
+    this.samples.forEach((buffer, id) => {
+      const channels: Float32Array[] = [];
+      for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+        channels.push(new Float32Array(buffer.getChannelData(ch)));
+      }
+      result.push({ id, channels, sampleRate: buffer.sampleRate, length: buffer.length });
+    });
+    return result;
+  }
+
+  restoreSampleBuffers(snapshots: Array<{ id: string; channels: Float32Array[]; sampleRate: number; length: number }>): void {
+    const ctx = this._context;
+    for (const snap of snapshots) {
+      const buffer = ctx.createBuffer(snap.channels.length, snap.length, snap.sampleRate);
+      for (let ch = 0; ch < snap.channels.length; ch++) {
+        buffer.copyToChannel(snap.channels[ch], ch, 0);
+      }
+      this.samples.set(snap.id, buffer);
+    }
   }
 
   getAnalyserData(): Uint8Array {

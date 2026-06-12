@@ -26,9 +26,9 @@ const DEFAULT_PATTERN: Record<number, number[]> = {
   2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], // Hat Closed: every step
 };
 
-const TRACK_COLORS: string[] = ["#FF4C4C", "#4C83FF", "#FFD700", "#00FF00"];
+const _TRACK_COLORS: string[] = ["#FF4C4C", "#4C83FF", "#FFD700", "#00FF00"];
 
-const TRACK_LABEL_W = "w-36"; // shared width for track label column and automation label
+const _TRACK_LABEL_W = "w-36"; // shared width for track label column and automation label
 
 // Choke group colors: group 1-4
 const CHOKE_COLORS: Record<number, string> = {
@@ -247,6 +247,7 @@ export function DrumMachine() {
     midiAccess,
     bpm,
     trackRouter,
+    setBpm,
   } = useTBMAudio();
 
   // Hidden file input ref for sample loading
@@ -272,6 +273,12 @@ export function DrumMachine() {
   const dmNotifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Fix 1.2 🟡: store pre-count timer so it can be cancelled on unmount
   const preCountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Timer registry for pad-trigger flash timeouts (fixes C3)
+  const triggerFlashTimerRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  // Engine ref to avoid stale closures in sequencer callbacks (fixes H5)
+  const engineRef = useRef(engine);
 
   // Stem import file input
   const stemImportRef = useRef<HTMLInputElement>(null);
@@ -382,24 +389,28 @@ export function DrumMachine() {
     automationParamRef.current = automationParam;
   }, [automationData, automationParam]);
 
+  // Engine ref sync: keeps engineRef.current current across reinit (fixes H5)
+  useEffect(() => {
+    engineRef.current = engine;
+  }, [engine]);
+
   const handlePlay = useCallback(() => {
     resumeAudio();
     if (sequencer) {
       sequencer.setOnStep((step) => {
         setCurrentStep(step);
-        // Apply automation lane values to engine at each step (read from refs to avoid stale closure)
-        if (engine) {
+        const eng = engineRef.current;
+        if (eng) {
           const curAutomation = automationDataRef.current;
           const curParam = automationParamRef.current;
           for (let t = 0; t < 16; t++) {
             const lane = curAutomation[t];
             if (!lane || lane.length === 0) continue;
             const val = lane[step] ?? 0;
-            // Apply automation to ALL tracks that have lane data (not just activeTrack)
-            if (curParam === "Volume") engine.setPadVolume?.(t, val);
-            else if (curParam === "Pan") engine.setPadPan?.(t, val * 2 - 1);
+            if (curParam === "Volume") eng.setPadVolume?.(t, val);
+            else if (curParam === "Pan") eng.setPadPan?.(t, val * 2 - 1);
             else if (curParam === "Filter Cutoff")
-              engine.setPadFilterCutoff?.(t, val * 127);
+              eng.setPadFilterCutoff?.(t, val * 127);
           }
         }
       });
@@ -422,7 +433,7 @@ export function DrumMachine() {
         setIsPlaying(true);
       }
     }
-  }, [sequencer, engine, resumeAudio, preCount, bpm]);
+  }, [sequencer, resumeAudio, preCount, bpm]);
 
   const handleStop = useCallback(() => {
     sequencer?.stop();
@@ -443,6 +454,14 @@ export function DrumMachine() {
       case '1/16T': return base / 6;
     }
   }
+
+  const schedulePadFlash = useCallback((delay: number, trackId: number) => {
+    const timerId = setTimeout(() => {
+      setTriggeredPads((prev) => { const next = new Set(prev); next.delete(trackId); return next; });
+      triggerFlashTimerRef.current.delete(timerId);
+    }, delay);
+    triggerFlashTimerRef.current.add(timerId);
+  }, []);
 
   const startNoteRepeat = useCallback(
     (trackId: number) => {
@@ -493,11 +512,11 @@ export function DrumMachine() {
 
           ctxTriggerPad(modifiedPad, repeatVelocity);
           setTriggeredPads((prev) => new Set(prev).add(padTrackId));
-          setTimeout(() => setTriggeredPads((prev) => { const next = new Set(prev); next.delete(padTrackId); return next; }), 60);
+          schedulePadFlash(60, padTrackId);
         }
       }, intervalMs);
     },
-    [noteRepeat, engine, bpm, noteRepeatDivision, noteRepeatCount, enginePads, ctxTriggerPad, sixteenLevels, sixteenLevelsParam],
+    [noteRepeat, engine, bpm, noteRepeatDivision, noteRepeatCount, enginePads, ctxTriggerPad, sixteenLevels, sixteenLevelsParam, schedulePadFlash],
   );
 
   const stopNoteRepeat = useCallback(() => {
@@ -505,6 +524,8 @@ export function DrumMachine() {
       clearInterval(noteRepeatIntervalRef.current);
       noteRepeatIntervalRef.current = null;
     }
+    triggerFlashTimerRef.current.forEach(clearTimeout);
+    triggerFlashTimerRef.current.clear();
   }, []);
 
   // ── MPC pad release: clear held state ──
@@ -514,7 +535,7 @@ export function DrumMachine() {
   }, [stopNoteRepeat]);
 
   const handlePadTrigger = useCallback(
-    (trackId: number, event?: React.MouseEvent) => {
+    (trackId: number, _event?: React.MouseEvent) => {
       setActiveTrack(trackId);
 
       // ── Pad Mute Mode: toggle mute, don't trigger sound ──
@@ -578,7 +599,7 @@ export function DrumMachine() {
         // MPC flash + held glow
         setTriggeredPads((prev) => new Set(prev).add(trackId));
         setHeldPads((prev) => new Set(prev).add(trackId));
-        setTimeout(() => setTriggeredPads((prev) => { const next = new Set(prev); next.delete(trackId); return next; }), 180);
+        schedulePadFlash(180, trackId);
 
         // Note repeat: start interval
         if (noteRepeat) startNoteRepeat(trackId);
@@ -607,7 +628,7 @@ export function DrumMachine() {
         }
       }
     },
-    [enginePads, ctxTriggerPad, sixteenLevels, sixteenLevelsParam, noteRepeat, startNoteRepeat, engine, padMuteMode],
+    [enginePads, ctxTriggerPad, sixteenLevels, sixteenLevelsParam, noteRepeat, startNoteRepeat, padMuteMode, schedulePadFlash, trackSettings],
   );
 
   // Handle file selection for sample loading
@@ -817,6 +838,8 @@ export function DrumMachine() {
       // Fix 1.2 🟡: cancel pending pre-count recording activation
       if (preCountTimerRef.current)
         clearTimeout(preCountTimerRef.current);
+      triggerFlashTimerRef.current.forEach(clearTimeout);
+      triggerFlashTimerRef.current.clear();
     },
     [stopNoteRepeat],
   );
@@ -947,7 +970,7 @@ export function DrumMachine() {
       });
       midiAccess.removeEventListener("statechange", handleStateChange);
     };
-  }, [midiAccess, enginePads, ctxTriggerPad]);
+  }, [midiAccess, enginePads, ctxTriggerPad, trackSettings]);
 
   // ── Automation drag handler ──
   const handleAutomationPointerMove = useCallback(
@@ -1037,7 +1060,7 @@ export function DrumMachine() {
     [trackSettings],
   );
 
-  const activeSettings = trackSettings[activeTrack];
+  const _activeSettings = trackSettings[activeTrack];
 
   // Sync kbPadsRef for keyboard handler (pads is declared above via useMemo)
   useEffect(() => {
@@ -1065,7 +1088,7 @@ export function DrumMachine() {
         onStop={handleStop}
         onRecord={() => setIsRecording(!isRecording)}
         onLoopToggle={() => setIsLooping(!isLooping)}
-        onTapTempo={() => console.log("Tap tempo tapped")}
+          onTapTempo={(bpm) => { setBpm(bpm); if (sequencer) sequencer.setBpm(bpm); }}
         onMetronomeToggle={() => setMetronomeEnabled(!metronomeEnabled)}
         onQuantize={() => setQuantizeEnabled(!quantizeEnabled)}
         metronomeEnabled={metronomeEnabled}

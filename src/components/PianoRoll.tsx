@@ -1162,7 +1162,6 @@ export function PianoRoll() {
   // Load piano roll state from localStorage on mount
   useEffect(() => {
     try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       const saved = localStorage.getItem('tbm_piano_roll_state');
       if (saved) {
         const state = JSON.parse(saved);

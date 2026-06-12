@@ -1,338 +1,196 @@
 <div align="center">
 <img width="1200" height="475" alt="TBM Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 
-# TBM (Tap-Beat-Machine) - Professional Web Audio Sampler & Sequencer
+# TBM (Tap-Beat-Machine) — Web Audio Sampler & Sequencer
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18.2-blue)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.0-blue)](https://reactjs.org/)
 [![Web Audio API](https://img.shields.io/badge/Web%20Audio%20API-✓-green)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
-[![Electron](https://img.shields.io/badge/Electron-29.0-blue)](https://www.electronjs.org/)
-[![VST3](https://img.shields.io/badge/VST3-Compatible-orange)](https://www.steinberg.net/vst3/)
+[![Vite](https://img.shields.io/badge/Vite-6.2-646CFF)](https://vitejs.dev/)
+[![Tests](https://img.shields.io/badge/Tests-134%20passing-brightgreen)]()
 
-**A professional-grade audio sampler, sequencer, and beat production environment built with modern web technologies.**
+**A browser-based audio sampler, step sequencer, and beat production environment.**
 
 </div>
 
-## 🎯 Overview
+## Overview
 
-TBM (Tap-Beat-Machine) is a sophisticated audio production tool that combines the power of hardware samplers with modern web technology. It features a complete 16-pad sampler, step sequencer, piano roll, effects processing, and VST3 integration capabilities.
+TBM is a web-based music production tool featuring a 16-pad sampler, step sequencer, piano roll, mixer, and effects processing — all running in the browser via the Web Audio API. An optional Electron shell provides desktop integration with additional features like VST3 hosting.
 
 ### Key Features
 
 - **16-Pad Sampler** with ADSR envelope control and polyphonic playback
-- **Step Sequencer** with pattern recording and automation lanes
+- **Step Sequencer** with pattern recording, automation lanes, and A/B switching
 - **Piano Roll** with MIDI recording and note editing
-- **Real-time Effects** (Reverb, Delay, Filter, Compression)
-- **VST3 Plugin Support** via Electron integration
-- **Stem Separation** powered by AI audio processing
-- **Professional Mixing Console** with sidechain compression
-- **Modulation Matrix** for advanced sound design
-- **Comprehensive Testing Suite** with 23+ unit tests
+- **Real-time Effects** (Reverb, Delay, Filter, Compression, Sidechain)
+- **DJ Mode** with dual decks, crossfader, scratch, and vinyl simulation
+- **Modulation Matrix** for LFO/envelope routing
+- **Song Editor** for chaining patterns into arrangements
+- **AI-assisted Analysis** via configurable LLM backends
+- **Stem Separation** offline using Demucs (optional Python backend)
+- **Macro Controls** with snapshot morphing
+- **Export** to WAV/MP3 with configurable bit depth and stem isolation
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- **For Stem Separation**: Python 3.8+ and demucs package (optional)
+- Node.js 18+
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone <repository-url>
 cd TBM---Tap-Beat-Machine-main
-
-# Install dependencies
 npm install
-
-# Run development server
-npm run dev
-
-# Run tests
-npm test
-
-# Build for production
-npm run build
+npm run dev       # Start dev server at http://localhost:3000
 ```
 
-### Desktop App (Electron)
+### Other Commands
 
 ```bash
-# Install Electron dependencies
-npm install --save-dev electron concurrently cross-env
-
-# Run as desktop app
-npm run dev:desktop
-
-# Build desktop executable
-npm run build:desktop
+npm test                      # Run unit tests (134 tests, 10 test files)
+npm run test:server           # Run backend integration tests
+npm run test:coverage         # Generate coverage report
+npm run lint                  # TypeScript typecheck + ESLint
+npm run build                 # Production build to dist/
+npm run server                # Start backend server only
 ```
 
-### Stem Separation Setup (Optional)
+### Advanced / Experimental Features
 
-TBM includes AI-powered stem separation using Facebook's Demucs. To use this feature:
+#### Desktop App (Electron)
 
-1. **Install Python 3.8+** from [python.org](https://www.python.org/downloads/)
-2. **Install demucs package**:
-   ```bash
-   pip install demucs
-   ```
-3. **Verify installation**:
-   ```bash
-   python -m demucs --help
-   ```
-4. **Start TBM server** (included in dev mode):
-   ```bash
-   npm run dev
-   ```
+```bash
+npm run build && npm run electron
+npm run electron:build        # Package as desktop executable
+```
 
-The stem separator will automatically detect if demucs is installed. You can check the health status at `http://localhost:3000/api/stems/health`.
+#### VST3 Hosting (Desktop Only)
 
-**Note**: First-time use will download model weights (~4GB) which are cached in `~/.cache/torch/hub/checkpoints/`.
+TBM can host VST3 plugins via a native Node addon bridge in the Electron build:
 
-### VST Host Integration
+```bash
+npm install --save-dev node-gyp
+npm run build:native
+```
 
-TBM can host VST plugins in the desktop (Electron) version. The integration uses a native Node.js addon bridge:
+#### Stem Separation (Requires Python + Demucs)
 
-1. **Build the native addon** (requires Node.js native build tools):
-   ```bash
-   npm install --save-dev node-gyp
-   npm run rebuild
-   ```
+For AI-powered stem separation:
 
-2. **VST scanning** is automatic on first launch in desktop mode
-3. **Plugin validation** happens via the VSTManager component
-4. **Audio processing** is handled through the native bridge with low latency
+```bash
+pip install demucs
+```
 
-For detailed VST3 plugin development, see [VST3_INTEGRATION.md](VST3_INTEGRATION.md).
+The server auto-detects Demucs on startup. Check status at `http://localhost:3000/api/stems/health`.
 
-## 📖 User Guide
-
-### Getting Started
-
-1. **Load Samples**: Drag and drop audio files onto any pad
-2. **Create Patterns**: Use the step sequencer to program beats
-3. **Record MIDI**: Connect a MIDI controller or use the virtual keyboard
-4. **Apply Effects**: Add reverb, delay, and filtering to your sounds
-5. **Mix & Export**: Use the mixer to balance levels and export your track
-
-### Core Components
-
-#### 🥁 Drum Machine
-- 16-step sequencer with pattern copy/delete
-- Note repeat and automation lanes
-- Swing and humanization controls
-- Pattern A/B switching
-
-#### 🎹 Piano Roll
-- Multi-track MIDI recording
-- Note editing with velocity control
-- Quantization and grid snapping
-- Track duplication and sequencing
-
-#### 🔊 Audio Engine
-- Web Audio API-based processing
-- Real-time effects chain
-- Sample key detection
-- Poly/mono/legato playback modes
-
-#### 🎚️ Mixer Console
-- 8-channel mixer with pan controls
-- RMS/LUFS metering
-- Sidechain compression
-- Master bus processing
-
-### Advanced Features
-
-#### VST3 Integration
-TBM can be compiled as a VST3 plugin using the included Electron wrapper. See [VST3_INTEGRATION.md](VST3_INTEGRATION.md) for details.
-
-#### Stem Separation
-Upload a mixed track and separate it into stems (drums, bass, vocals, other) using AI processing.
-
-#### Modulation Matrix
-Create complex modulation routings between LFOs, envelopes, and audio parameters.
-
-## 🛠️ Development
-
-### Project Structure
+## Project Structure
 
 ```
 src/
-├── components/          # React components
-│   ├── DrumMachine.tsx # Step sequencer
-│   ├── PianoRoll.tsx   # MIDI editor
-│   ├── WaveformVisualizer.tsx # Sample editor
-│   └── ...
-├── lib/                # Core libraries
-│   ├── TBMAudioEngine.ts # Audio processing
-│   ├── keyDetection.ts # Pitch detection
-│   ├── logger.ts       # Production logging
-│   └── ...
-├── contexts/           # React contexts
-│   └── TBMAudioContext.tsx # Audio state management
-├── test/              # Test utilities
-│   └── setup.ts       # Test environment setup
-└── App.tsx            # Main application
+├── components/          React UI components
+│   ├── DrumMachine.tsx  Step sequencer
+│   ├── PianoRoll.tsx    MIDI editor
+│   ├── WaveformVisualizer.tsx
+│   ├── SongEditor.tsx   Arrangement builder
+│   ├── ConsoleMixer.tsx Mixer with metering
+│   └── ... (~40+ component files)
+├── engine/              Audio runtime layer
+│   ├── TBMAudioEngine.ts  Core sampler/effects engine
+│   ├── trackRouter.ts     Mixer channel routing
+│   ├── midiHandler.ts     Global MIDI I/O
+│   └── midiMapping.ts     MIDI → pad mapping
+├── hooks/               Custom React hooks
+│   ├── useSongManager.ts    Song/section state
+│   ├── useAutoSave.ts       Periodic auto-save
+│   ├── useBounceEngine.ts   Audio export
+│   ├── useFileOperations.ts Project save/load
+│   ├── useProjectUndoRedo.ts
+│   └── ... (~15+ hooks)
+├── contexts/            React context providers
+│   └── TBMAudioContext.tsx  Audio engine lifecycle
+├── lib/                 Shared utilities
+│   ├── audio/              Sub-modules (sequencer, synth, FX, DJ, etc.)
+│   ├── statePersistence.ts Project serialization
+│   ├── logger.ts           Structured logging
+│   ├── api.ts              Server API client
+│   └── constants.ts        App-wide constants
+├── types/               TypeScript declarations
+└── main.tsx             App entry point
 ```
 
-### Key Implementation Details
-
-#### Audio Engine (`TBMAudioEngine.ts`)
-- Manages Web Audio API nodes and connections
-- Handles sample loading and playback
-- Implements ADSR envelopes and filtering
-- Provides polyphonic voice management
-
-#### State Management
-- React Context for global audio state
-- Local storage for project persistence
-- Real-time parameter updates
-
-#### Error Handling
-- React Error Boundary for UI errors
-- Structured logging system
-- Graceful audio context recovery
-
-### Testing
+## Testing
 
 ```bash
-# Run all tests
+# Run all client tests
 npm test
 
-# Run tests in watch mode
-npm run test:watch
+# Run server tests
+npm run test:server
 
-# Generate coverage report
+# Coverage report
 npm run test:coverage
 ```
 
-Tests cover:
-- Audio engine functionality
+Test coverage includes:
+- Audio engine sample export/restore, routing, resource cleanup (TBMAudioEngine)
+- ModMatrix correct clamping of NaN/Infinity values
+- Pad serialization round-trip (all fields preserved)
+- TrackRouter slot assignment, release, and node lifecycle
+- Sequencer pattern and transport behavior
 - Key detection algorithms
-- Component rendering
-- State management
+- LocalStorage quota and error recovery
+- Server routes for export, stems, health
+- DrumMachine rendering and interaction
 
-## 🚀 Production Readiness
+## Build Verification
 
-### Current Status: 8/10
+```bash
+npm run lint    # TypeScript check + ESLint (zero errors)
+npm test        # All client tests pass
+npm run build   # Vite production build
+```
 
-**✅ Completed:**
+## Current Status
+
+**Completed:**
 - Core audio engine with Web Audio API
-- Complete UI with all major components
-- Error handling and logging system
-- Comprehensive test suite (23+ tests)
-- Key detection for samples
-- Build system and type checking
+- 16-pad sampler with ADSR, filtering, polyphony
+- Step sequencer with automation, swing, humanize
+- Piano roll with MIDI recording
+- Song editor for sectional arrangement
+- Mixer with EQ, sidechain, metering
+- DJ mode with dual decks and effects
+- Project save/load with file export (.tbm format)
+- Macro controls with snapshot morphing
+- AI-backed music theory analysis
+- Lint/typecheck/test CI pipeline
 
-**🔧 In Progress:**
-- State persistence and recovery
-- Performance optimizations
-- Additional component tests
+**Experimental:**
+- VST3 hosting (Electron only)
+- Stem separation (requires Python backend)
+- ASIO/WASAPI native audio output
+- Turntable scratch emulation
+- Band synthesis engine
 
-**📋 Remaining:**
-- Advanced performance monitoring
-- Additional documentation examples
+## Troubleshooting
 
-### Build Verification
+| Issue | Check |
+|-------|-------|
+| No audio output | Browser audio permissions, Web Audio API support, console errors |
+| MIDI not working | Device permissions, MIDI mapping settings |
+| Audio glitches | Reduce buffer size, close other apps, reduce voice count |
+| Stem separation fails | Python 3.8+, Demucs installed, internet access for model download |
 
-```bash
-# Type checking
-npm run typecheck
-
-# Linting
-npm run lint
-
-# Build verification
-npm run build
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-1. **No Audio Output**
-   - Check browser permissions for microphone/audio
-   - Verify Web Audio API is supported
-   - Check console for error messages
-
-2. **MIDI Not Working**
-   - Ensure MIDI device is connected
-   - Check browser MIDI permissions
-   - Verify MIDI mapping in settings
-
-3. **Performance Issues**
-   - Reduce buffer size in settings
-   - Close other audio applications
-   - Use fewer simultaneous voices
-
-### Debugging
-
-Enable debug logging by setting `DEBUG=true` in your environment:
-
-```bash
-DEBUG=true npm run dev
-```
-
-Check the browser console for detailed logs from the audio engine.
-
-## 📚 API Reference
-
-### TBMAudioEngine
-
-```typescript
-// Core methods
-triggerPad(padIndex: number, velocity: number): void
-loadSample(padIndex: number, buffer: AudioBuffer): void
-setPadADSR(padIndex: number, adsr: ADSRParams): void
-setPadFilter(padIndex: number, cutoff: number, resonance: number): void
-
-// State management
-dispose(): void
-getAnalyser(): AnalyserNode
-```
-
-### Context API
-
-```typescript
-const { engine, pads, audioContext, projectKey } = useTBMAudio()
-```
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Add tests for new functionality
-5. Run the test suite
+5. Run `npm run lint` (zero errors) and `npm test` (all green)
 6. Submit a pull request
 
-### Development Guidelines
+## License
 
-- Follow TypeScript strict mode
-- Use functional React components with hooks
-- Maintain 80%+ test coverage
-- Document new features
-- Follow existing code style
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Web Audio API team for the powerful browser audio capabilities
-- React team for the component architecture
-- Electron team for desktop app framework
-- Steinberg for VST3 SDK
-
-## 📞 Support
-
-For issues and feature requests, please use the GitHub Issues page.
-
----
-
-<div align="center">
-<sub>Built with ❤️ by the TBM development team</sub>
-</div>
+MIT License — see LICENSE file for details.

@@ -80,9 +80,7 @@ router.post('/', async (req, res) => {
 
     res.json({ ...parsed, _provider: result.provider, _model: result.model });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const provider = getActiveProvider();
-    res.status(500).json({ error: `AI analysis failed (${provider}): ${message}` });
+    res.status(500).json({ error: 'AI analysis failed' });
   }
 });
 

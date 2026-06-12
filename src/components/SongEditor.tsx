@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Plus, X, GripVertical, Play, Square, Download, Save, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 
 let sectionCounter = 0;
@@ -47,7 +47,7 @@ export const SongEditor: React.FC<SongEditorProps> = ({
   songs,
   onSaveSong,
   onDeleteSong,
-  onPlaySection,
+  onPlaySection: _onPlaySection,
   onPlaySong,
   onStop,
   onExport,
@@ -56,8 +56,8 @@ export const SongEditor: React.FC<SongEditorProps> = ({
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [sections, setSections] = useState<SongSection[]>([]);
   const [songName, setSongName] = useState('Untitled Song');
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [_dragIdx, _setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, _setDragOverIdx] = useState<number | null>(null);
 
   const currentSong = songs[currentSongIndex];
   const displaySections = currentSong ? currentSong.sections : sections;
@@ -210,7 +210,7 @@ export const SongEditor: React.FC<SongEditorProps> = ({
             {songs.length === 0 && !isNewSong && (
               <p className="text-[11px] text-neutral-600 italic">No songs saved</p>
             )}
-            {(isNewSong ? [{ id: 'new', name: '+ New Song' } as Song] : []).map((s, idx) => (
+            {(isNewSong ? [{ id: 'new', name: '+ New Song' } as Song] : []).map((s, _idx) => (
               <button
                 key={s.id}
                 disabled

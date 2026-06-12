@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, useCallback } from "react";
+import React, { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { logger } from "./lib/logger";
 import { useTBMAudio } from "./contexts/TBMAudioContext";
@@ -11,6 +11,8 @@ import { useFileOperations } from "./hooks/useFileOperations";
 import { useDeckLoader } from "./hooks/useDeckLoader";
 import { useMacroControls } from "./hooks/useMacroControls";
 import { useSongManager } from "./hooks/useSongManager";
+import type { Song } from "./hooks/useSongManager";
+import type { Sequencer } from "./engine/TBMAudioEngine";
 import { HeaderBar } from "./components/HeaderBar";
 import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
@@ -65,10 +67,10 @@ interface TabContentProps {
   externalBufferB: AudioBuffer | null;
   externalNameA: string;
   externalNameB: string;
-  songs: any[];
+  songs: Song[];
   snapshots: { id: string; name: string; values: number[] }[];
   macroValues: number[];
-  sequencer: any;
+  sequencer: Sequencer | null;
   onSetActiveTab: (tab: string) => void;
   onLoadDeckA: (url: string, name: string) => Promise<void>;
   onLoadDeckB: (url: string, name: string) => Promise<void>;
@@ -76,10 +78,10 @@ interface TabContentProps {
   onSaveSnapshot: (name: string) => void;
   onLoadSnapshot: (id: string) => void;
   onMorphToSnapshot: (id: string, duration: number) => void;
-  onSaveSong: (song: any) => void;
+  onSaveSong: (song: Song) => void;
   onDeleteSong: (id: string) => void;
-  onPlaySection: (section: any) => void;
-  onPlaySong: (song: any) => void;
+  onPlaySection: (section: Song["sections"][number]) => void;
+  onPlaySong: (song: Song) => void;
   onExport: () => void;
   showNotification: (type: "success" | "error", message: string) => void;
 }
@@ -87,14 +89,14 @@ interface TabContentProps {
 function TabContent({
   activeTab, analyserNode,
   externalBufferA, externalBufferB, externalNameA, externalNameB,
-  songs, snapshots, macroValues, sequencer,
+  songs, snapshots, macroValues: _macroValues, sequencer,
   onSetActiveTab, onLoadDeckA, onLoadDeckB,
   onMacroChange, onSaveSnapshot, onLoadSnapshot, onMorphToSnapshot,
   onSaveSong, onDeleteSong, onPlaySection, onPlaySong, onExport, showNotification,
 }: TabContentProps) {
   const [vinylMode, setVinylMode] = useState<"decks" | "sampler">("decks");
-  const [musicDrawerOpen, setMusicDrawerOpen] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(true);
+  const [musicDrawerOpen, _setMusicDrawerOpen] = useState(false);
+  const [_keyboardVisible, _setKeyboardVisible] = useState(true);
 
   switch (activeTab) {
     case "sampler":
@@ -195,6 +197,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("sampler");
   const [isPanic, setIsPanic] = useState(false);
   const [workspaceMode, setWorkspaceMode] = useState<"ideas" | "arranger">("ideas");
+  const panicTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     audioError, resumeAudio, engine, sequencer, pads,
@@ -209,7 +212,7 @@ export default function App() {
 
   const {
     projectKey, activeState, undoStack, redoStack,
-    setSnapshot: setUndoSnapshot,
+    setSnapshot: _setUndoSnapshot,
     pushSnapshot, setProjectKey, setActiveState,
     handleUndo, handleRedo, bSnapshotRef,
   } = useProjectUndoRedo({ sequencer, pads, setPads, setBpm });
@@ -253,7 +256,7 @@ export default function App() {
 
   useEffect(() => {
     if (showExportModal && sequencer) setBounceBpm(sequencer.getBpm());
-  }, [showExportModal, sequencer]);
+  }, [showExportModal, sequencer, setBounceBpm]);
 
   useEffect(() => {
     if (!sequencer) return;
@@ -263,22 +266,30 @@ export default function App() {
       sequencer.setBpm(snap.bpm);
       bSnapshotRef.current = null;
     }
-  }, [activeState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeState, sequencer]);
 
   const handlePanic = useCallback(() => {
     engine?.stopAll();
     sequencer?.stop();
     setIsPanic(true);
     showNotification("error", "AUDIO ENGINE RESET (PANIC)");
-    setTimeout(() => setIsPanic(false), 1000);
+    if (panicTimerRef.current !== null) clearTimeout(panicTimerRef.current);
+    panicTimerRef.current = setTimeout(() => setIsPanic(false), 1000);
   }, [engine, sequencer, showNotification]);
+
+  useEffect(() => {
+    return () => {
+      if (panicTimerRef.current !== null) clearTimeout(panicTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const TAB_HOTKEYS: Record<string, string> = {
       "1": "sampler", "2": "drums", "3": "hats", "4": "pianoroll",
       "5": "chords", "6": "mixer", "7": "vinyl", "8": "library", "9": "settings",
     };
-    const onKey = (e: KeyboardEvent) => {
+    const onKey = async (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
       const target = e.target as HTMLElement;
       const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable;
@@ -296,7 +307,9 @@ export default function App() {
         if (sequencer) {
           if (sequencer.getState().isPlaying) sequencer.stop();
           else {
-            if (audioContext?.state === "suspended") audioContext.resume();
+            if (audioContext?.state === "suspended") {
+              await audioContext.resume();
+            }
             sequencer.play();
           }
         }
@@ -309,8 +322,26 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleUndo, handleRedo, handleProjectSave, openExportModal, sequencer, audioContext, showNotification]);
 
-  const handlePlaySection = useCallback((section: any) => { sequencer?.stop(); sequencer?.play(); }, [sequencer]);
-  const handlePlaySong = useCallback((song: any) => { if (sequencer && song.sections.length > 0) { sequencer.stop(); sequencer.play(); } }, [sequencer]);
+  const handlePlaySection = useCallback((section: Song["sections"][number]) => {
+    if (!sequencer) return;
+    const pattern = patterns[section.patternIndex];
+    if (!pattern) return;
+    sequencer.stop();
+    sequencer.selectPattern(pattern.id);
+    sequencer.play();
+  }, [sequencer]);
+
+  const handlePlaySong = useCallback((song: Song) => {
+    if (!sequencer || song.sections.length === 0) return;
+    const firstSection = song.sections[0];
+    const pattern = patterns[firstSection.patternIndex];
+    if (!pattern) return;
+    sequencer.stop();
+    sequencer.setBpm(song.bpm);
+    sequencer.setSwing(song.swing);
+    sequencer.selectPattern(pattern.id);
+    sequencer.play();
+  }, [sequencer]);
 
   const handleNewProject = useCallback(() => {
     if (!window.confirm("Create a new project? Any unsaved changes will be lost.")) return;
@@ -329,7 +360,7 @@ export default function App() {
     showNotification("success", "A → B COPIED");
   }, [sequencer, projectKey, bSnapshotRef, pushSnapshot, showNotification]);
 
-  const instrumentTabs = ["sampler", "pianoroll", "drums", "hats", "chords", "session"];
+  const _instrumentTabs = ["sampler", "pianoroll", "drums", "hats", "chords", "session"];
   const showSidebar = workspaceMode === "ideas" && activeTab !== "settings";
 
   return (
