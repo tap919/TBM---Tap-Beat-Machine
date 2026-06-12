@@ -1,0 +1,25 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2015
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio-backend", "audio-backend.vcxproj", "{57A16313-DB1F-E1DD-BF94-F4E4AD3E4DE5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vst-host", "vst-host.vcxproj", "{0C595D1C-7F41-9576-B3CE-1609B220B311}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C595D1C-7F41-9576-B3CE-1609B220B311}.Debug|x64.ActiveCfg = Debug|x64
+		{0C595D1C-7F41-9576-B3CE-1609B220B311}.Debug|x64.Build.0 = Debug|x64
+		{0C595D1C-7F41-9576-B3CE-1609B220B311}.Release|x64.ActiveCfg = Release|x64
+		{0C595D1C-7F41-9576-B3CE-1609B220B311}.Release|x64.Build.0 = Release|x64
+		{57A16313-DB1F-E1DD-BF94-F4E4AD3E4DE5}.Debug|x64.ActiveCfg = Debug|x64
+		{57A16313-DB1F-E1DD-BF94-F4E4AD3E4DE5}.Debug|x64.Build.0 = Debug|x64
+		{57A16313-DB1F-E1DD-BF94-F4E4AD3E4DE5}.Release|x64.ActiveCfg = Release|x64
+		{57A16313-DB1F-E1DD-BF94-F4E4AD3E4DE5}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

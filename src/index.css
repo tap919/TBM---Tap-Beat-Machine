@@ -1,0 +1,292 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: var(--brand-primary);
+  --color-brand-glow: var(--brand-primary-glow);
+  --color-indicator: var(--indicator);
+  --color-indicator-glow: var(--indicator-glow);
+  --color-bg-main: var(--bg-main);
+  --color-bg-surface: var(--bg-surface);
+  --color-border-main: var(--border-main);
+  --color-text-main: var(--text-main);
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+  select option {
+    background-color: #1a1a1a;
+    color: #e5e5e5;
+  }
+}
+
+@layer utilities {
+  /* Scrollbars */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  /* Glassmorphism panel */
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Brand glow on active elements */
+  .glow-brand {
+    box-shadow: 0 0 16px var(--brand-primary-glow), 0 0 4px var(--brand-primary-glow);
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--text-main) 0%, rgba(255,255,255,0.5) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle inner glow for panels */
+  .panel-inset {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.2);
+  }
+
+  /* ── Subtle depth & texture utilities ── */
+
+  /* Fine noise grain overlay — apply to a container, use ::after for the texture */
+  .noise-texture::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    mix-blend-mode: overlay;
+    border-radius: inherit;
+  }
+
+  /* Soft inner vignette for depth on panels */
+  .vignette {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      inset 0 -1px 0 rgba(0,0,0,0.15),
+      inset 0 0 40px rgba(0,0,0,0.15);
+  }
+
+  /* Glowing separator line — horizontal */
+  .separator-glow {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--brand-primary-glow) 30%,
+      var(--brand-primary) 50%,
+      var(--brand-primary-glow) 70%,
+      transparent 100%
+    );
+    opacity: 0.35;
+  }
+
+  /* Subtle bottom-edge glow on header-style bars */
+  .edge-glow-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--brand-primary-glow) 40%,
+      var(--brand-primary-glow) 60%,
+      transparent
+    );
+    opacity: 0.25;
+    pointer-events: none;
+  }
+
+  /* Indicator dot with soft glow ring */
+  .dot-glow {
+    box-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
+  }
+
+  /* Meter bar colored shadow */
+  .meter-glow-green {
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+  }
+  .meter-glow-red {
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+  }
+
+  /* Hover highlight for dropdown menu items */
+  .menu-item-glow:hover {
+    background: linear-gradient(90deg, var(--brand-primary-glow), transparent 80%);
+    background-size: 100% 100%;
+    background-position: left;
+  }
+
+  /* Left-edge accent stripe for toasts/cards */
+  .stripe-left::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  /* High contrast text for accessibility */
+  .text-contrast-medium {
+    color: #a0a0a0; /* Better contrast on dark backgrounds */
+  }
+  
+  .text-contrast-high {
+    color: #d0d0d0; /* High contrast on dark backgrounds */
+  }
+
+  /* Animated entrance */
+  .animate-in {
+    animation: animateIn 0.2s ease-out forwards;
+  }
+  .slide-in-from-right-8 {
+    animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+
+  /* Slow pulse for status indicators */
+  .pulse-slow {
+    animation: pulseSlow 3s ease-in-out infinite;
+  }
+}
+
+@keyframes animateIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulseSlow {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+/* ── MPC / FL Studio feel ── */
+
+/* MPC pad flash on trigger */
+@keyframes padFlash {
+  0%   { box-shadow: inset 0 0 30px rgba(255,255,255,0.5), 0 0 20px var(--pad-glow, rgba(255,199,44,0.4)); }
+  100% { box-shadow: inset 0 0 0 transparent, 0 0 0 transparent; }
+}
+.pad-flash {
+  animation: padFlash 0.18s ease-out;
+}
+
+/* MPC pad held state — pressure glow */
+@keyframes padHold {
+  0%, 100% { box-shadow: inset 0 0 12px rgba(255,255,255,0.15), 0 0 8px var(--pad-glow, rgba(255,199,44,0.3)); }
+  50%      { box-shadow: inset 0 0 20px rgba(255,255,255,0.25), 0 0 14px var(--pad-glow, rgba(255,199,44,0.5)); }
+}
+.pad-held {
+  animation: padHold 0.8s ease-in-out infinite;
+}
+
+/* FL-style playhead glow — the sweeping column highlight */
+@keyframes playheadPulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+.step-playhead {
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
+  box-shadow: inset 0 0 8px rgba(255,255,255,0.08);
+}
+
+/* FL-style beat accent markers — darker on non-beat, brighter on beat */
+.step-beat-accent {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.02) 0%,
+    rgba(255,255,255,0.02) 24.9%,
+    rgba(255,255,255,0.05) 25%,
+    rgba(255,255,255,0.05) 25.1%
+  );
+}
+
+/* Velocity bar — bottom strip showing hit velocity */
+.velocity-bar {
+  transition: height 0.08s ease-out;
+}
+
+/* Pattern slot active ring pulse */
+@keyframes patternPulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--brand-primary), 0 0 6px var(--brand-primary-glow); }
+  50%      { box-shadow: 0 0 0 2px var(--brand-primary), 0 0 12px var(--brand-primary-glow); }
+}
+.pattern-active {
+  animation: patternPulse 2s ease-in-out infinite;
+}
+
+/* Groove dots — subtle swing visualizer */
+.groove-dot {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* LED indicator (mute/solo) */
+.led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+.led-off {
+  background-color: #333;
+  box-shadow: none;
+}
+.led-mute {
+  background-color: #eab308;
+  box-shadow: 0 0 4px #eab308, 0 0 8px rgba(234,179,8,0.3);
+}
+.led-solo {
+  background-color: #22c55e;
+  box-shadow: 0 0 4px #22c55e, 0 0 8px rgba(34,197,94,0.3);
+}
+.led-rec {
+  background-color: #ef4444;
+  box-shadow: 0 0 4px #ef4444, 0 0 8px rgba(239,68,68,0.3);
+}

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="..">
+      <UniqueIdentifier>{13ED4249-1F9C-5F0F-2651-29A73F3A7059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\src">
+      <UniqueIdentifier>{F1003AD6-4B6D-45DF-3F56-5CAC869BF55E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..">
+      <UniqueIdentifier>{13ED4249-1F9C-5F0F-2651-29A73F3A7059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\deps">
+      <UniqueIdentifier>{8F4D108C-CDC5-48AC-AEE2-230B23E0C688}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:">
+      <UniqueIdentifier>{F87FD356-0FEB-9BC5-D1FA-368C81420008}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:\Users">
+      <UniqueIdentifier>{707347A1-1ABA-A9B2-9AF4-DE122F5D7F08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:\Users\User">
+      <UniqueIdentifier>{20523F0D-65D8-63D4-B369-49D0A48B6CA2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:\Users\User\Desktop">
+      <UniqueIdentifier>{68E47669-79A8-F716-44A9-E89748D1EB03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:\Users\User\Desktop\Modular Studio">
+      <UniqueIdentifier>{9CDDE917-FD5E-2FC9-42B3-C132E80BDCA4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:\Users\User\Desktop\Modular Studio\TBM---Tap-Beat-Machine-main">
+      <UniqueIdentifier>{A3A1778E-77FE-1220-5C63-881DAF77C90F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:\Users\User\Desktop\Modular Studio\TBM---Tap-Beat-Machine-main\node_modules">
+      <UniqueIdentifier>{126A39EA-1D28-5689-C126-0DA0AB5837A0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:\Users\User\Desktop\Modular Studio\TBM---Tap-Beat-Machine-main\node_modules\node-gyp">
+      <UniqueIdentifier>{49558BB4-6D34-CA91-A65D-85A65792DC11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="C:\Users\User\Desktop\Modular Studio\TBM---Tap-Beat-Machine-main\node_modules\node-gyp\src">
+      <UniqueIdentifier>{F1003AD6-4B6D-45DF-3F56-5CAC869BF55E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..">
+      <UniqueIdentifier>{13ED4249-1F9C-5F0F-2651-29A73F3A7059}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\audio-backend.cpp">
+      <Filter>..\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\RtAudio.cpp">
+      <Filter>..\deps</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\User\Desktop\Modular Studio\TBM---Tap-Beat-Machine-main\node_modules\node-gyp\src\win_delay_load_hook.cc">
+      <Filter>C:\Users\User\Desktop\Modular Studio\TBM---Tap-Beat-Machine-main\node_modules\node-gyp\src</Filter>
+    </ClCompile>
+    <None Include="..\binding.gyp">
+      <Filter>..</Filter>
+    </None>
+  </ItemGroup>
+</Project>

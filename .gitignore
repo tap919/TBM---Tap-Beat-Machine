@@ -1,0 +1,13 @@
+node_modules/
+Lib/
+Scripts/
+Include/
+Big-Homie-Python/
+audio/
+dist/
+.vite/
+*.pyc
+__pycache__/
+data/*.db
+data/*.db-shm
+data/*.db-wal

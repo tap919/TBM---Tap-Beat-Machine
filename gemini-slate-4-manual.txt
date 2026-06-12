@@ -1,0 +1,455 @@
+&
+
+
+
+S E R ATO DJ I N T R O CO N T R O L L E R S
+
+
+
+
+
+
+
+
+
+WWW. G E M I N I S O U N D. CO M
+
+
+I N T R O D U C T I O N  ( E N G L I S H )
+Thank you for purchasing our SLATE or SLATE 4 USB controller. We are confident that the Gemini platform of products will not only make your life easier through the use of the latest technological advancements in cross-platform connectivity and sound reproduction but will raise the bar for DJ and pro audio products. With the proper care & maintenance, your unit will likely provide years of reliable, uninterrupted service. All Gemini products are backed by a 1-year limited warranty*.
+
+R E G I ST R AT I O N
+Please go to www.geminisound.com to register your Slate. Registering your product allows Gemini to keep you up-to-date with any new product developments such as product updates or enhancements.
+
+P R E PA R I N G FO R F I R ST U S E
+Please ensure that you find these accessories included with the SLATE Controller:
+(1) Slate
+(1) USB Cable
+(1) Serato DJ Intro Software Installation Instructions
+(1) Operating instructions
+(1) Safety and Warranty Information
+
+S L AT E S E T U P
+Locate the Serato DJ Intro installation card in the box to download and install the software. Once installed connect your Slate to your computer. Then connect speakers to the RCA ouputs and headphones to the headphone output. Power on your computer, open Serato DJ Intro and load music to the decks. You are now ready to DJ with your Gemini Slate for Serato DJ Intro!
+
+
+
+
+
+
+1. Sync
+2. Play/Pause
+3. Cue
+4. Jog Wheel
+5. Scratch/Slip
+6. Performance Pads 1-8
+7. Pitch fader
+8. Keylock/Range
+9. FX 1/FX 1 Select
+10. FX 2/FX 2 Select
+11. FX 3/FX 3 Select
+12. FX Level & Beats
+13. Pad Mode
+14. 
+Load
+15. EQ High/Mid/Low
+16. Filter
+17. Cue
+18. Track Fader
+19. Browse/Back
+20. Master Volume
+21. Cue Volume
+22. Shift
+23. Cross Fader
+24. Cue Mix
+25. Mic Volume
+
+
+
+
+
+A. USB Output
+B. Master Output RCA
+C. 
+Headphone Output
+D. Microphone Input
+
+
+M AS T E R O U T P U T - Plug one end of the RCA cables into the MASTER OUTPUT (B) on the rear panel. Plug the other end of the RCA connectors into any available inputs on your speaker, mixer or PA system.
+U S B O U T - Plug in the USB cable into the USB OUT (A) on the rear panel. Plug the other end of the USB cable into any available USB port on your computer.
+H E A D P H O N E O U T P U T - The Slate contains a 1/4" HEADPHONE OUTPUT (C) allowing monitoring of cued tracks before playback through the master outputs.
+M I C I N P U T - Plug a 1/4" cable into the MIC INPUT (D) to input a microphone.
+
+B R OWS I N G T R AC K S / FO L D E R S - Rotating the BROWSE rotary encoder (19) aides in searching for files and folders within your DJ software. To load a track, highlight a track and press one of the LOAD (14) buttons.
+P L AY/ PAU S E - Pressing PLAY/PAUSE (2) will begin playback of the selected track. Pressing PLAY/PAUSE again will pause playback and hold the track at the current position. C U E - While the unit is in playback, press PLAY/PAUSE (2) to pause the track. While the track is paused, press CUE (3) to set the cue point at the current position. The CUE indicator illuminates when the CUE point is set. Pressing CUE again will take you to the cue point and pause the track.
+SY N C - Pressing SYNC (1) will cause the track to sync with the track currently playing or cued in the other decks.
+J O G W H E E L CO N T R O L - Pressing SCRATCH (5) enables the Jog Wheel to operate in SCRATCH mode. Pressing SHIFT (22) +SLIP (5) enables the deck to enter SLIP mode.
+P I TC H FA D E R - Moving the PITCH CONTROL FADER (7) will accelerate the pitch when moved towards [+] and deaccellerate the pitch when it is moved towards [-]. Holding SHIFT
+(22) and pressing the RANGE (8) button adjusts the range of the PITCH CONTROL FADER within your DJ software.
+
+
+CHOOSING A PAD MODE - When turned on the pads will default to Hot Cue mode. To change mode, press and hold PAD MODE (13) and press pad 1-8. The word written under the pad determines which pad mode is set (HOT CUE, MANUAL, AUTO, SAMPLER, ROLL, HOT LOOP, SLICER, BANK).
+HOT CUE - Press pads 1-8 to add/trigger cue points. Holding SHIFT and pressing pads 1-8 will delete cue points. (Pads 6-8 are only used when full version of Serato DJ is purchased.) MANUAL - Use this mode to set manual loops. Pressing pad 1 will start set a Manual Loop In point, pad 2 will set the Loop Out point. If the loop is active hitting pad 1 or 2 will let you adjust the In/Out points of the loop. Pad 3 will turn loop ON/OFF. Pad 4 will half the current loop size. Pad 7 will turn the Loop On/Off and Retrigger the loop and Pad 8 will double the current loop, Pads 5 and 6 are not used.
+AUTO LOOP - In AUTO mode, pressing pads 1-8 will activate Auto Loops of different sizes. Press pad again to turn loop off.
+SAMPLER - Trigger SP-6 samples using pads 1-6. (Pads 5-6 are only used when full version
+
+of Serato DJ is purchased.) Pads 7 and 8 are not used.
+ROLL - (Only available when full version of Serato DJ is purchased.) Pressing pads 1-8 will set loop rolls of specified length as long as the pad is held. The track will slip and continue playing from original play- head position when you lift your finger off the pad.
+HOT LOOP - (Only available when full version of Serato DJ is purchased.) Hot loop mode will allow you to engage a set loop from the cue points you have set. Press pad once to jump to that cue point and set a loop. The loop size can be toggled on the virtual deck in the loop size area. Pressing the pad again will turn the loop off. Hold SHIFT and press pad to re-trigger the Cue Point with the loop on.
+SLICER - (Only available when full version of Serato DJ is purchased.) A specified range (or domain) is divided into eight equal sections, and these eight sliced sections are assigned to the respective performance pads. Holding Pad Mode and pressing SLICER once for the first mode, is a shifting Slicer Domain. Pressing SLICER twice, for the second mode is a fixed Slicer Domain or "loop". Use the PARAMETER knob to set the quantization for the slicer function. The quantization can be set in four ways: 1/8, 1/4, 1/2 and 1. SHIFT + PARAMETER knob will set the domain. The domain can be set to one of six settings: 2 beats, 4 beats, 8 beats, 16 beats, 32 beats or 64 beats.
+BANK - (Only available when full version of Serato DJ is purchased.) When in BANK mode, pads 1-4 control SP-6 sample banks while pads 5-8 control SP-6 output channels.
+FX SELECT - Hold SHIFT (22) and press FX1 (9), FX2 (10), or FX3 (11) to select the effect for that slot.
+FX ON/OFF - Press FX1 (9), FX2 (10), or FX3 (11) to toggle the currently selected FX on and off.
+FX LEVEL & BEATS - Turning FX AMOUNT & DEPTH (12) will control the parameter of FX slot 1-3. Hold SHIFT (22) and turning FX AMOUNT & DEPTH (12) will adjust the FX BEATS Multiplier.
+
+
+Click on the Tips icon to enable Tool Tips. This is located next to the setup button in the top right hand corner of the screen. Tool Tips provide a handy way to learn the various features of Serato DJ Intro
+
+I N T R O D U CC I Ó N ( E s p a ñ o l )
+Gracias por comprar nuestro controlador USB SLATE o SLATE 4. Estamos seguros de que la plataforma Gemini de productos no sólo hará tu vida más fácil a través de los últimos avances tecnológicos en conectividad multiplataforma y reproducción de sonido sino que también planteará la barra para DJ y productos de audio profesional. Con el cuidado apropiado & mantenimiento, su unidad probablemente proporcionará años de servicio confiable, sin interrupciones. Todos los productos de Géminis están respaldados por una garantía de limitada 1 año*.
+
+R E G I ST R O
+Por favor vaya a www.geminisound.com para registrar su pizarra. Registrar su producto permite Gemini para mantenerte actualizado con los nuevos desarrollos de productos tales como actualizaciones o mejoras.
+
+P R E PA R AC I Ó N PA R A S U P R I M E R U S O
+Asegúrese de que usted encontrar estos accesorios incluidos con el controlador de SLATE:
+(1) SLATE or SLATE 4
+(1) Cable USB
+(1) instrucciones de instalación de Software Serato DJ Intro
+(1) manual de instrucciones
+(1) información sobre la garantía y seguridad
+
+CO N F I G U R AC I Ó N D E S L AT E
+Coloque la tarjeta de instalación Serato DJ Intro en el cuadro de descargar e instalar el software. Una vez instalado Conecte la Slate a su ordenador. Luego conecte los altavoces a las salidas de RCA y auriculares a la salida de auriculares. Encienda su ordenador, abra Serato DJ Intro y música de carga a las cubiertas. Ahora estás listo para DJ con su Slate de Gemini para Serato DJ Intro!
+
+
+
+
+
+
+
+1. Sync
+2. Play/Pause
+3. Cue
+4. Jog Wheel
+5. Scratch/Slip
+6. Performance Pads 1-8
+7. Pitch fader
+8. Keylock/Range
+9. FX 1/FX 1 Select
+10. FX 2/FX 2 Select
+11. FX 3/FX 3 Select
+12. FX Level & Beats
+13. Pad Mode
+14. 
+Load
+15. EQ High/Mid/Low
+16. Filter
+17. Cue
+18. Track Fader
+19. Browse/Back
+20. Master Volume
+21. Cue Volume
+22. Shift
+23. Cross Fader
+24. Cue Mix
+25. Mic Volume
+
+
+
+
+
+A. USB Output
+B. Master Output RCA
+C. 
+Headphone Output
+D. Microphone Input
+
+
+M AS T E R O U T P U T - Enchufe un extremo de los cables RCA a la salida MASTER (B) en el panel trasero. Enchufe el otro extremo de los conectores RCA en todas las entradas disponibles en su altavoz, mezclador o sistema de megafonía.
+U S B O U T - Conecte el cable USB en el USB a (A) en el panel trasero. Enchufe el otro extremo del cable USB en cualquier puerto USB disponible en su computadora.
+H E A D P H O N E O U T P U T - La lista contiene un 1/4" salida de auriculares (C) que permite monitoreo de oírse pistas antes de reproducción a través de las salidas master.
+M I C I N P U T - Conecte un cable de 1/4" en el MIC entrada (D) a la entrada de un micrófono.
+B R OWS I N G T R AC K S / FO L D E R S - rotando a los ayudantes de codificador rotatorio
+(19) BROWSE en la búsqueda de archivos y carpetas dentro de su software para DJ. Para cargar una pista, resalte una pista y pulse uno de los botones de carga (14).
+P L AY/ PAU S E - pulsar PLAY/PAUSE (2) comenzará la reproducción de la pista seleccionada. Otra vez pulsar PLAY/PAUSE a pausar la reproducción y mantener la pista en la posición actual.
+C U E - Mientras la unidad está en reproducción, pulse PLAY/PAUSE (2) para hacer una pausa en la pista. Mientras que la pista está en pausa, oprima CUE (3) para ajustar el punto de referencia en la posición actual. El taco
+indicador se ilumina cuando se establece el punto de referencia. CUE Pulsando otra vez te llevará al punto cue y hacer una pausa en la pista.
+SY N C - Pulsando SYNC (1) provocará la pista sincronizar con la pista actualmente jugando o con claves en las otras cubiertas
+J O G W H E E L CO N T R O L - Pulsar cero (5) permite el Jog Wheel operar en modo SCRATCH. Presionando SHIFT (22) + SLIP (5) permite la cubierta acceder al modo de deslizamiento.
+P I TC H FA D E R - Mover al FADER de PITCH CONTROL (7) acelerará el paso cuando se mudó hacia [+] y la deaccellerate el tono cuando se movió hacia [-]. Manteniendo SHIFT
+(22) y pulsando el botón RANGE (8) ajusta la gama del FADER CONTROL PITCH dentro de su software para DJ
+
+
+CHOOSING A PAD MODE - Cuando enciende las teclas por defecto al modo Hot Cue. Para cambiar el modo, presione y mantenga tecla MODE (13) y oprima la tecla 1-8. La palabra escrita debajo de la almohadilla determina cuál modo de almohadilla (HOT CUE, MANUAL, AUTO, SAMPLER, ROLL, HOT LOOP, SLICER, BANK).
+HOT CUE - Oprima las teclas 1-8 para añadir o desencadenar los puntos de referencia. Manteniendo SHIFT y pulsando teclas 1-8, se eliminarán los puntos de referencia. (Cojines 6-8 sólo se utilizan cuando se compra la versión completa de Serato DJ).
+MANUAL - Utilice este modo para establecer lazos manuales. Pulsando la tecla 1 conjunto comienzo un punto Manual Loop In, pad 2 voluntad establecerá el punto Loop Out. Si esté activo el bucle golpear tecla 1 o 2 voluntad dejo ajustar la In/Out puntos del lazo. Cojín
+
+3 pondrá lazo ON/OFF. Cojín 4 será la mitad del tamaño actual del bucle. Almohadilla 7 convertirá el On/Off Loop y Retrigger el lazo y Pad 8 doble el bucle de corriente, almohadillas de 5 y 6 no se utilizan.
+AUTO LOOP - En el modo automático, pulse cojines 1-8 para activar Auto lazos de diferentes tamaños. Oprima la tecla nuevamente para apagar el bucle.
+SAMPLER - Desencadenar SP-6 muestras con teclas numéricas 1-6. (Almohadillas 5-6 sólo se utilizan cuando se compra la versión completa de Serato DJ). No se utilizan almohadillas 7 y 8
+ROLL - (Sólo versión disponible cuando esté lleno de Serato DJ es adquirir.) Pulsar del 1-8 pondrá lazo rollos de longitud especificada mientras el cojín está sostenido. La pista se deslice y seguir jugando desde la posición original juego de cabeza cuando levanta el dedo de la almohadilla.
+HOT LOOP - (Sólo versión disponible cuando esté lleno de Serato DJ es adquirir.) Modo de bucle caliente le permitirá realizar un bucle establecido desde los puntos de referencia que se ha definido. Oprima la tecla una vez para saltar al punto de localización y establecer un lazo. El tamaño del bucle puede ser fijado en la bandeja virtual en el área del tamaño
+de bucle. Vuelve a pulsar la tecla se apagará el bucle. Mantenga pulsado SHIFT y oprima la tecla para volver a activar el punto de referencia con el lazo en.
+SLICER - (Sólo versión disponible cuando esté lleno de Serato DJ es adquirir.) Un intervalo especificado (o dominio) está dividida en ocho partes iguales, y estas ocho secciones en rodajas se asignan a las almohadillas de funcionamiento respectivo. Sosteniendo la tecla Mode y pulsando una vez cortadora para el primer modo, es un dominio de rebanador cambiantes. Urgente cortar dos veces, para el segundo modo es una cortadora de dominio fijo o "loop". Utilice la perilla de parámetros para establecer la cuantificación de la función de cortar. La cuantificación se puede ajustar en cuatro formas: 1/8, 1/4, 1/2 y 1. Mayús + botón de parámetro establecerá el dominio. El dominio puede establecerse en uno de los seis ajustes: 2 pulsaciones, 4 tiempos, 8 beats, 16 beats, 32 golpes o 64 golpes.
+BANK - (Sólo versión disponible cuando esté lleno de Serato DJ es adquirir.) Cuando en modo de banco, pastillas de control de los bancos muestra SP-6 mientras que las almohadillas 5-8 1-4 controlan de SP-6 canales de salida.
+FX SELECT - Mantenga pulsado SHIFT (22) y pulse FX1 (9), FX2 (10), o FX3 (11) para seleccionar el efecto de esa ranura.
+FX ON/OFF - Pulse FX1 (9), FX2 (10), o FX3 (11) para alternar el seleccionado FX encendido y apagado.
+FX LEVEL & BEATS - Torneado FX cantidad & profundidad (12) controlará el parámetro de ranura FX 1-3. Mantenga SHIFT (22) y girando la voluntad FX cantidad & profundidad (12) ajustan el multiplicador FX BEATS.
+
+
+Clic en el icono de consejos para activar la herramienta consejos. Este se encuentra al lado del botón de configuración en la esquina superior derecha de la pantalla. Consejos para
+la herramienta proporcionan una manera útil para aprender las distintas características de Serato DJ Intro
+
+I N T R O D U C T I O N ( F ra n ç a i s )
+Merci d'avoir acheté notre ardoise ou SLATE 4 USB controller. Nous sommes convaincus que la plate-forme de Gemini de produits non seulement rendront votre vie plus facile grâce à l'utilisation des tous derniers progrès technologiques en connectivité multiplate- forme et reproduction sonore mais déclenchera la barre pour DJ et produits audio professionnels. Avec le soin approprié & entretien, votre appareil sera probablement des années de service fiable et sans interruption. Tous les produits Gemini sont couverts par une garantie limitée 1 an*.
+
+E N R E G I ST R E M E N T
+Rendez-vous sur www.geminisound.com pour enregistrer votre ardoise. Enregistrement de votre produit permet à Gemini pour vous tenir au courant des développements de nouveaux produits tels que les mises à jour ou améliorations.
+
+P R É PA R AT I O N P O U R U N E P R E M I È R E U T I L I SAT I O N
+Veuillez vous assurer que vous trouverez ces accessoires inclus avec le contrôleur de l'ardoise :
+(1) Slate
+(1) câble USB
+(1) Instructions d'Installation de logiciels Intro DJ Serato
+(1) mode d'emploi
+(1) sécurité et renseignements sur la garantie
+
+I N STA L L AT I O N D E S L AT E
+Localiser la carte d'installation Intro DJ Serato dans la boîte pour télécharger et installer le logiciel. Une fois installé Branchez votre ardoise sur votre ordinateur. Puis connectez les
+haut-parleurs aux sorties RCA et casque à la sortie casque. Allumez votre ordinateur, l'open Serato DJ Intro et la musique de charge pour les ponts. Vous êtes maintenant prêt à DJ avec votre ardoise Gemini pour Serato DJ Intro!
+
+
+
+
+
+
+
+1. Sync
+2. Play/Pause
+3. Cue
+4. Jog Wheel
+5. Scratch/Slip
+6. Performance Pads 1-8
+7. Pitch fader
+8. Keylock/Range
+9. FX 1/FX 1 Select
+10. FX 2/FX 2 Select
+11. FX 3/FX 3 Select
+12. FX Level & Beats
+13. Pad Mode
+14. 
+Load
+15. EQ High/Mid/Low
+16. Filter
+17. Cue
+18. Track Fader
+19. Browse/Back
+20. Master Volume
+21. Cue Volume
+22. Shift
+23. Cross Fader
+24. Cue Mix
+25. Mic Volume
+
+
+
+
+
+A. USB Output
+B. Master Output RCA
+C. 
+Headphone Output
+D. Microphone Input
+
+
+M AS T E R O U T P U T - Branchez une extrémité des câbles RCA dans la sortie MASTER
+(B) sur le panneau arrière. Branchez l'autre extrémité des connecteurs RCA dans n'importe quelles entrées disponibles sur votre haut-parleur, le mélangeur ou le système de sonorisation.
+U S B O U T - Branchez le câble USB dans le USB OUT (A) sur le panneau arrière. Branchez l'autre extrémité du câble USB dans un port USB disponible sur votre ordinateur.
+H E A D P H O N E O U T P U T - L'ardoise contient un 1/4" sortie casque (C) qui permet un contrôle indicés titres avant la lecture à travers les sorties master.
+M I C I N P U T - Branchez un câble 1/4 po dans le MIC d'entrée (D) à l'entrée d'un microphone.
+B R OWS I N G T R AC K S / FO L D E R S - Rotation des aides (19) de la molette les parcourir à la recherche de fichiers et de dossiers dans votre logiciel de DJ. Pour charger une piste, sélectionnez une piste, puis appuyez sur un des boutons de chargement (14).
+P L AY/ PAU S E - en appuyant sur lecture/PAUSE (2) commencera la lecture de la piste sélectionnée. En appuyant sur PLAY/PAUSE à nouveau va interrompre la lecture et tenir la piste à la position actuelle.
+C U E - Lorsque l'appareil est en mode lecture, appuyez sur lecture/PAUSE (2) pour mettre en pause la piste. Alors que la piste est en pause, appuyez sur le CUE (3) pour définir le point de repère à la position actuelle. L'indicateur CUE s'allume lorsque le point de repère est réglé. En appuyant sur le repère à nouveau vous emmènera au point de repère et pauser la piste.
+SY N C - Sur SYNC (1) fera la piste pour une synchronisation avec la piste actuellement jouer ou repérée dans les autres ponts.
+J O G W H E E L CO N T R O L - Pressing SCRATCH (5) enables the Jog Wheel to operate in SCRATCH mode. Pressing SHIFT (22) +SLIP (5) enables the deck to enter SLIP mode.
+P I TC H FA D E R - Déplacer le contrôle de PITCH FADER (7) va accélérer la tonalité lorsque déplacés vers [+] et le deaccellerate le terrain lorsqu'il se déplace vers [-].
+Maintenant SHIFT (22) et en appuyant sur la touche RANGE (8) permet de régler la plage de l'atténuateur de contrôle au sein de votre logiciel de DJ
+
+
+CHOOSING A PAD MODE - Lorsque mis en marche les touches par défaut en mode Hot Cue. Pour changer de mode, maintenez la touche MODE (13) et appuyez sur la touche 1-8. Le mot écrit sous le tapis détermine quel mode pad est défini (HOT CUE, MANUAL, AUTO, SAMPLER, ROLL, HOT LOOP, SLICER, BANK).
+HOT CUE - Appuyer sur les touches 1 à 8 pour ajouter/déclencher des points de repère. Maintenant SHIFT et en appuyant sur les touches 1-8 supprimera les points de repère. (Tampons 6-8 sont uniquement utilisés lorsque la version complète de DJ Serato est achetée.)
+MANUAL - Utilisez ce mode pour définir les boucles manuelles. En appuyant sur la touche 1 Démarrer ensemble un manuel Loop In point, pad 2 volonté fixera le point Loop Out. Si
+
+la boucle est active frapper la touche 1 ou 2 volonté vous permettre d'ajuster l'In/Out des points de la boucle. Plaquette 3 tournera loop ON/OFF. PAD 4 sera la moitié la taille actuelle de la boucle. Touche 7 passera l'on/off de boucle et Retrigger la boucle et Pad 8 vont doubler la boucle de courant, tampons 5 et 6 ne sont pas utilisés.
+AUTO LOOP - En mode automatique, en appuyant sur les touches 1-8 activera Auto boucles de différentes tailles. Appuyez sur la touche pour éteindre la boucle.
+SAMPLER - Déclenchement instantané d'échantillons SP-6 à l'aide des touches 1 à 6. (Touches 5 et 6 sont uniquement utilisés lorsque la version complète de DJ Serato est achetée.) Blocs 7 et 8 ne sont pas utilisés.
+ROLL - (Uniquement version disponible lorsqu'il est plein de DJ Serato est achetée). En appuyant sur les touches 1-8 mettra boucle rouleaux de longueur spécifiée tant que la touche est maintenue. La piste va glisser et continuer à jouer de position initiale de tête de lecture lorsque vous soulevez votre doigt sur le pavé.
+HOT LOOP - (Uniquement version disponible lorsqu'il est plein de DJ Serato est achetée). Mode de boucle chaude vous permettra de vous engager une boucle définie depuis les points de repère, que vous avez défini. Appuyer sur la touche une fois pour passer au point de repérage et de créer une boucle. La taille de la boucle peut être basculée sur le lecteur virtuel dans la zone taille de boucle. Appuyez à nouveau sur la touche s'éteint la boucle.
+Maintenez Maj enfoncée et appuyez sur la touche pour re-déclencher le Point de repère avec la boucle sur.
+SLICER - (Uniquement version disponible lorsqu'il est plein de DJ Serato est achetée). Une plage spécifiée (ou domaine) est divisé en huit parties égales, et ces huit sections en tranches sont assignées sur les plaquettes de performances respectives. Tenant la touche Mode et appuyer une fois sur trancheuse pour le premier mode, est un domaine de trancheuse mouvants. Appuyant sur trancheuse deux fois, pour le second mode est une trancheuse domaine fixe ou la " boucle ". Utilisez le bouton paramètre pour définir la quantification de la fonction de trancheuse. La quantification peut être définie de quatre
+manières : 1/8, 1/4, 1/2 et 1. Maj + bouton PARAMETER fixera le domaine. Le domaine peut être définie à l'un des six réglages: 2 temps, 4 temps, 8 battements, 16 battements, 32 battements ou 64 battements.
+BANK - (Uniquement version disponible lorsqu'il est plein de DJ Serato est achetée). En mode Banque, garnitures de contrôler les banques de samples de SP-6 tout en tampons 5-8 de 1-4 commande SP-6 canaux de sortie.
+FX SELECT - Maintenez SHIFT (22) et appuyez sur FX1 (9), FX2 (10), ou FX3 (11) pour sélectionner l'effet pour cet emplacement.
+FX ON/OFF - Appuyez sur FX1 (9), FX2 (10), ou FX3 (11) pour activer ou désactiver le FX actuellement sélectionné.
+FX LEVEL & BEATS - Tournant FX montant & profondeur (12) contrôlera le paramètre de FX slot 1-3. Maintenez SHIFT (22) et en tournant la volonté FX montant & profondeur (12) ajustent le multiplieur FX bat.
+
+Cliquez sur l'icône conseils pour activer les info-bulles. Il est situé à côté du bouton de réglage dans le coin supérieur droit de l'écran. Info-bulles offrent un moyen pratique
+
+I N T R O D U C T I O N ( D e u t s c h )
+Vielen Dank für den Kauf unserer Schiefer oder Schiefer 4 USB-Controllers. Wir sind zuversichtlich, dass die Gemini-Plattform der Produkte wird nicht nur Ihr Leben leichter durch den Einsatz der neuesten technologischen Fortschritte in Cross-Plattform- Konnektivität und Klangwiedergabe machen aber die Messlatte für DJ und pro-audio Produkten legen wird. Mit der richtigen Pflege & Wartung liefern Ihr Gerät wahrscheinlich zuverlässig, ununterbrochenen Dienstjahren. Alle Gemini-Produkte werden von einem 1 Jahr begrenzte Garantie * unterstützt.
+
+R E G I ST R I E R U N G
+Bitte gehen Sie zu www.geminisound.com, Ihr Schiefer zu registrieren. Registrierung Ihres Produkts ermöglicht Gemini Sie neue Prodct Entwicklungen wie Produkt-Updates oder Erweiterungen auf dem Laufenden zu halten.
+
+VO R B E R E I T U N G F Ü R D I E E R ST E V E RW E N D U N G
+Bitte stellen Sie sicher, dass Sie diese mit dem Schiefer-Controller inklusive Zubehör finden:
+(1) Slate
+(1) USB-Kabel
+(1) Serato DJ Intro Software Installationsanleitung
+(1) Betriebsanleitungen
+(1) die Sicherheit und Garantieinformationen
+
+S L AT E S E T U P
+Suchen Sie die Serato DJ Intro-Installation-Karte in das Kontrollkästchen, um die Software herunterladen und installieren. Einmal installiert Ihr Schiefer an Ihren Computer anschließen. Dann schließen Sie die Lautsprecher an die RCA Ausgange und Kopfhörer an den Kopfhörerausgang. Schalten Sie Ihren Computer und offenen Serato DJ Intro laden Musik die Decks. Sie können jetzt DJ mit Ihrem Gemini-Schiefer für Serato DJ Intro!
+
+
+
+
+
+
+
+1. Sync
+2. Play/Pause
+3. Cue
+4. Jog Wheel
+5. Scratch/Slip
+6. Performance Pads 1-8
+7. Pitch fader
+8. Keylock/Range
+9. FX 1/FX 1 Select
+10. FX 2/FX 2 Select
+11. FX 3/FX 3 Select
+12. FX Level & Beats
+13. Pad Mode
+14. 
+Load
+15. EQ High/Mid/Low
+16. Filter
+17. Cue
+18. Track Fader
+19. Browse/Back
+20. Master Volume
+21. Cue Volume
+22. Shift
+23. Cross Fader
+24. Cue Mix
+25. Mic Volume
+
+
+
+
+
+A. USB Output
+B. Master Output RCA
+C. 
+Headphone Output
+D. Microphone Input
+
+
+M AS T E R O U T P U T - Plug one end of the RCA cables into the MASTER OUTPUT (B) on the rear panel. Plug the other end of the RCA connectors into any available inputs on your speaker, mixer or PA system.
+U S B O U T - Plug in the USB cable into the USB OUT (A) on the rear panel. Plug the other end of the USB cable into any available USB port on your computer.
+H E A D P H O N E O U T P U T - The Slate contains a 1/4" HEADPHONE OUTPUT (C) allowing monitoring of cued tracks before playback through the master outputs.
+M I C I N P U T - Plug a 1/4" cable into the MIC INPUT (D) to input a microphone.
+
+B R OWS I N G T R AC K S / FO L D E R S - Rotating the BROWSE rotary encoder (19) aides in searching for files and folders within your DJ software. To load a track, highlight a track and press one of the LOAD (14) buttons.
+P L AY/ PAU S E - Pressing PLAY/PAUSE (2) will begin playback of the selected track. Pressing PLAY/PAUSE again will pause playback and hold the track at the current position. C U E - While the unit is in playback, press PLAY/PAUSE (2) to pause the track. While the track is paused, press CUE (3) to set the cue point at the current position. The CUE indicator illuminates when the CUE point is set. Pressing CUE again will take you to the cue point and pause the track.
+SY N C - Pressing SYNC (1) will cause the track to sync with the track currently playing or cued in the other decks.
+J O G W H E E L CO N T R O L - Pressing SCRATCH (5) enables the Jog Wheel to operate in SCRATCH mode. Pressing SHIFT (22) +SLIP (5) enables the deck to enter SLIP mode.
+P I TC H FA D E R - Moving the PITCH CONTROL FADER (7) will accelerate the pitch when moved towards [+] and deaccellerate the pitch when it is moved towards [-]. Holding SHIFT
+(22) and pressing the RANGE (8) button adjusts the range of the PITCH CONTROL FADER within your DJ software.
+
+
+CHOOSING A PAD MODE - Wenn auf den Pads aktiviert wird Hot Cue-Modus standardmäßig verwendet. Um den Modus zu ändern, drücken Sie und halten Sie PAD MODE (13) und Pad 1-8. Das Wort unter dem Pad geschrieben bestimmt, welcher Modus festgelegt ist (HOT CUE, MANUAL, AUTO, SAMPLER, ROLL, HOT LOOP, SLICER, BANK).
+HOT CUE - Drücken Sie 1-8, die Cue-Points hinzufügen/Trigger Pads. Umschalttaste gedrückt und drücken Pads 1-8 löscht Cue-Points. (Pads 6-8 werden nur verwendet, wenn die Vollversion von Serato DJ gekauft wird.)
+MANUAL - Verwenden Sie diesen Modus, um manuelle Schleifen festzulegen. Pad 1 Drücken wird Start Satz ein Manual Loop In Punkt, Pad 2 wird den Loop Out-Punkt
+eingestellt. Wenn die Schleife aktiv ist dich schlagen Pad 1 oder 2 Willen anpassen, die In/ Out-Points der Schleife. Pad 3 schaltet Schleife ON/OFF. Pad 4 wird der aktuellen Schleife Hälfe. Pad 7 schaltet die Loop on/off und Aufzeichnung der Schleife und Pad-8 wird doppelt den Stromschleife, Pads 5 und 6 werden nicht verwendet.
+AUTO LOOP - Im AUTO-Modus aktiviert drücken Pads 1-8 automatische Loops
+
+unterschiedlicher Größe. Drücken Sie Pad wieder auszuschalten Schleife.
+SAMPLER - Lösen Sie SP-6 Proben mit Pads 1-6 aus. (Pads 5-6 werden nur verwendet, wenn die Vollversion von Serato DJ gekauft wird.) Pads 7 und 8 werden nicht verwendet. ROLL - (Nur ist verfügbar, wenn Sie voll Version von Serato DJ gekauft.) Drücken Pads 1-8 wird die Schleife Rollen angegebenen Länge festgelegt werden, solange das Pad gehalten wird. Die Strecke wird schlüpfen und weiter vom ursprünglichen Spiel-Kopf Position zu spielen, wenn Sie Ihren Finger das Pad heben.
+HOT LOOP - (Nur ist verfügbar, wenn Sie voll Version von Serato DJ gekauft.) Hot Loop- Modus können Sie sich eine Set-Schleife von Cue-Points, die Sie festgelegt haben. Drücken Sie Pad einmal zu springen, die cue-Punkt und legen Sie eine Schleife. Die Größe der Schleife kann auf das virtuelle Deck im Schleifenbereich umgeschaltet werden. Das Pad erneutes Drücken schaltet die Schleife ab. Halten Sie die UMSCHALTTASTE gedrückt und drücken Sie Pad, um die Cue-Point mit der Schleife erneut ausgelöst werden.
+SLICER - (Nur ist verfügbar, wenn Sie voll Version von Serato DJ gekauft.) Einen angegebenen Bereich (oder Domäne) gliedert sich in acht gleiche Teile, und diese acht geschnittene Abschnitte der jeweiligen Performance-Pads zugewiesen sind. Modus und dann SLICER einmal für den ersten Modus, ist eine Verlagerung Slicer-Domain. Drücken Sie SLICER einer festen Slicer Domäne oder "Schleife" zweimal, für den zweiten Modus ist. Verwenden Sie den PARAMETER-Knopf, um die Quantisierung für die Slicer-Funktion festzulegen. Die Quantisierung kann auf vier Arten festgelegt werden: 1/8, 1/4, 1/2 und 1. UMSCHALT + PARAMETER-Knopf wird die Domäne festgelegt. Die Domäne kann auf eine der sechs Einstellungen festgelegt werden: 2 Schläge, 4 Beats, 8 Schläge, 16-er Takt, 32 Schläge oder 64 Schlägen.
+BANK - (Nur ist verfügbar, wenn Sie voll Version von Serato DJ gekauft.) Im BANK-Modus steuern Bremsbeläge 1-4-SP-6 Sample-Bänke während Pads 5-8 Steuern SP-6 Ausgangskanäle.
+FX SELECT - Halten Sie die Umschalttaste (22) und drücken Sie die FX1 (9), FX2 (10), oder FX3 (11), um den Effekt für diesen Steckplatz auszuwählen.
+FX ON/OFF - Drücken Sie die FX1 (9), FX2 (10), oder FX3 (11) um die aktuell ausgewählte FX ein- und ausblenden.
+FX LEVEL & BEATS - Drehen FX Betrag & Tiefe (12) wird den FX-Steckplatz
+1-3-Parameter steuern. Halten Sie UMSCHALT (22) und drehen FX Betrag & Tiefe (12) Willen anpassen den BEATS von FX-Multiplikator.
+
+
+Klicken Sie auf das Symbol "Tipps", um QuickInfos zu aktivieren. Dies liegt neben den Setup-Taste in der rechten oberen Ecke des Bildschirms. Tool-Tipps bieten eine praktische Möglichkeit, die verschiedenen Merkmale der Serato DJ Intro lernen
+
+Warranty and Repair:
+All Gemini products are designed and manufactured to the highest standards in the industry. With proper care and main- tenance, your product will provide years of reliable service.
+LIMITED WARRANTY
+A. Gemini guarantees its products to be free from defects in materials and work- manship for One (1) year from the original purchase date. Exceptions: Laser as- semblies on CD Players, cartridges, and crossfaders are covered for 90 days.
+
+B. This limited warranty does not cover damage or failure caused by abuse, mis- use,
+abnormal use, faulty installation, improper maintenance or any repairs other than those provided by an authorized Gemini Service Center.
+
+C. There are no obligations of liability on the part of Gemini for consequential dam- ages arising out of or in connection with the use or performance of the product
+or other indirect damages with respect to loss of property, revenues, of profit, or costs of removal, installation, or reinstal- lation. All implied warranties for Gemini,
+including implied warranties for fitness, are limited in duration to One (1) year from the original date of purchase, unless otherwise mandated by local statutes.
+RETURN/REPAIR
+A. In the U.S.A., please call our helpful Customer Service Representatives at (732) 346-0061, and they will be happy to give you a Return Authorization Number (RA#) and the address of an authorized service center closest to you.
+B. After receiving an RA#, include a copy of the original sales receipt, with defective product and a description of the defect. Send by insured freight to: Gemini and use the address provided by your customer service representative. Your RA# must be written on the outside of the package, or processing will be delayed indefinitely!
+C. Service covered under warranty will be paid for by Gemini and returned to you. For non-warrantied products, Gemini will repair your unit after payment is received. Repair charges do not include return freight. Freight charges will be added to the repair charges.
+D. On warranty service, you pay for ship- ping to Gemini, we pay for return ship- ping within the continental United States. Alaska, Hawaii, Puerto Rico, Canada, Baha- mas, and the Virgin Islands will be charged
+
+for freight.
+E. Please allow 2-3 weeks for return of your product.
+
+Under normal circumstances your product will spend no more than 10 working days at Gemini.
+We are not responsible for shipping times.
+Gemini
+Worldwide Headquarters 107 Trumbull Street Building F8
+Elizabeth, NJ 07206 USA Tel: (732) 346-0061
+Fax: (732) 346-0065
+
+
+
+Register your product online at
+GEMINISOUND.COM to be
+stay up to date with product updates!
+
+In the USA: if you experience problems with this unit,
+call	732-346-0061	for	Gemini	customer service.
+Do not attempt to return this equipment to your dealer.
+
+
+
+Parts of the design of this product may be protected by worldwide patents. Information in this manual is subject to change without notice and does not represent a commitment on the part of the vendor. Gemini shall not be liable for any loss or damage whatsoever arising from the use of information or any error contained in this manual. No part of this manual may be reproduced, stored in a retrieval system or transmitted, in any form or by any means, electronic, electrical, mechanical, optical, chemical, including photocopying and recording, for any purpose without the express written permission of Gemini It is recommended that all maintenance and service on this product is performed by Gemini or its authorized agents. Gemini will not accept liability for loss or damage caused by maintenance or repair performed by unauthorized personnel.
+
+
+
+
+Worldwide Headquarters
+107 Trumbull Street, Building F8 • Elizabeth, NJ 07206
+• USA
+Tel: (732)346-0061 • Fax: (732)346-0065
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
